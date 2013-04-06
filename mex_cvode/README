@@ -1,0 +1,55 @@
+Infrastructure for integrating ODE/SDE models using CVode 
+within a Mex-wrapper that provides a MATLAB interface.
+
+FEATURES
+--------
+ + Fast integration based on CVode library
+ + MATLAB interface provided by Mex wrapper
+ + user defined rate equations and parameters
+ + Solver options; Dense, Sparse; Stiff, non-stiff
+ + supports SDE via Euler-Maruyama method
+ + user defined process noise function
+ + Piece-wise continuous control trajectories
+ + Piece-wise continuous disturbance channels
+ + objective function evaluation (mex_objective.c)
+ + scalar objective weights for state error, control magnitude and step size
+ + time-dependent reference trajectory
+
+FILES
+-----
+mex_integrate.c  : Mex-interface for integrating ODE/SDE system.
+mex_objective.c  : Mex-interface for evaluating objective function.
+integrate.c      : CVode integrator w/ Maruyama-Euler method for SDEs.
+integrate.h      : header for integrate.c
+functions.c      : commonly used math functions
+functions.h      : header for functions.c
+model.h          : defintions of model structures
+rhs.c            : RHS function definition (customizable!)
+rhs.h            : header for rhs.c (customizable!)
+
+CUSTOMIZE
+---------
+rhs.c contains model specific functions:
+  rhs_func             : right hand side (derivative) of the ODE
+  generate_state_noise : process noise generating function 
+
+rhs.h contains model specific defintions:
+  N_EQNS           : number of model equations
+  N_PARAMS         : number of model parameters
+  N_CTRL           : number of control variables
+  N_DIST           : number of disturbance variables
+  model_parameters : parameter names
+
+COMPILATION
+-----------
+Sundials CVode >= v2.6 and GSL libraries are required.
+See mex_integrate.c or mex_objective.c for specific instructions.
+
+EXAMPLE
+-------
+See rhs.c for an example application of the integration framework  
+
+AUTHOR
+------
+J.Hogg, 19 Apr 2012
+
