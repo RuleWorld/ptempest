@@ -1,0 +1,72 @@
+# EGF-EGFR model
+# based on cooperative binding model by MacDonald and Pike (2008) PNAS.
+begin model
+setOption("NumberPerQuantityUnit",6.0221e23)
+begin parameters
+    # fundamental constants
+    RT  2.5774863        # product of Universal gas constant and Temperature, kJ/mol
+    NA  6.0221418e23     # Avogadro's Number, /mol
+    PI  3.1415927        # Pi, no units
+    # simulation geometry
+    rad_cell   1e-4                        # radius of cell, dm
+    cell_dens  1e8                         # density of cell suspension, cells/L
+    width_PM   1e-7                        # "effective" width of  plasma membrance, dm
+    vol_EC     1/cell_dens                 # volume of extracellular space, L
+    vol_PM     4*PI*rad_cell^2*width_PM    # "effective" volume of plasma membrane, L
+    # initial species counts, concentrations
+    conc_Egf_0    2e-9     # M
+    count_Egfr_0  447000   # /cell
+    # bond energy terms, kJ/mol  (NOTE: -47.5 kJ/mol ~ Kd=10nM)
+    Gf_LR     -57.35
+    Gf_RR     -29.82    # w.r.t. "effective" volume of plasma membrane
+    # cooperative energy terms, kJ/mol
+    Gf_LRR    -0.365
+    Gf_LRRL   7.079
+    # rate distribution parameter, no units (no effect on equillibrium)
+    phi    0.5
+    # activation energy terms, kJ/mol (no effect on equillibrium)
+    Ea_LR  -17.8
+    Ea_RR  -11.9
+end parameters
+begin compartments
+    EC  3  vol_EC       # extracellular space
+    PM  2  vol_PM  EC   # plasma membrane
+end compartments
+begin molecule types
+    Egf(r)
+    Egfr(l,d)
+end molecule types
+begin seed species
+    Egf(r)@EC       conc_Egf_0*NA*vol_EC
+    Egfr(l,d)@PM    count_Egfr_0
+end seed species
+begin energy patterns
+    Egfr(l!0).Egf(r!0)                             Gf_LR/RT
+    Egfr(d!0).Egfr(d!0)                            Gf_RR/RT
+    Egf(r!0).Egfr(l!0,d!1).Egfr(d!1)               Gf_LRR/RT
+    Egf(r!0).Egfr(l!0,d!1).Egfr(l!2,d!1).Egf(r!2)  Gf_LRRL/RT
+end energy patterns
+begin observables
+    Molecules  LigFree   Egf(r)
+    Molecules  LigTotal  Egf()
+    Molecules  RecBound  Egf(r!0).Egfr(l!0)
+    Molecules  RecDimer  Egfr(d!0).Egfr(d!0)
+    Molecules  RecTotal  Egfr()
+end observables
+begin reaction rules
+    # Ligand-receptor binding and receptor aggregation
+    R0: Egf(r)  + Egfr(l)  <->  Egf(r!0).Egfr(l!0)   Arrhenius(phi,Ea_LR/RT)
+    # Receptor-aggregation
+    R1: Egfr(d) + Egfr(d)  <->  Egfr(d!0).Egfr(d!0)  Arrhenius(phi,Ea_RR/RT)
+end reaction rules
+end model
+
+# Generate reaction network
+generate_network({overwrite=>1})
+
+# Generate M-file containing ODE23s integrator for this model (slower than SUNDIALS):
+#writeMfile({t_start=>0,t_end=>120,n_steps=>240,atol=>1e-4,rtol=>1e-6})
+
+# Generate Mex-file containing SUNDIALS CVODE integrator (faster, but requires compilation)
+writeMexfile({t_start=>0,t_end=>120,n_steps=>240,sparse=>1,stiff=>1,atol=>1e-4,rtol=>1e-6,max_num_steps=>5000})
+
