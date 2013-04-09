@@ -1,7 +1,16 @@
 function [err] = plot_pike( params, cfg, figidx )
 %PLOT_PIKE Simulate and plot parameter scan over ligand and receptor concentration
-% 
-%  [] = plot_pike( params, cfg, figidx )
+%
+%  Plot the distribution of saturation binding curves and the receptor dimer
+%  fractions for the parameter set 'param':
+%
+%    [] = plot_pike( params, cfg )
+%    [] = plot_pike( params, cfg, figidx )
+%
+%  where 'params' is a (S x P) or (1 x P x S) array of parameters,
+%  'cfg' is the configuration struct, and 'figidx' is an optional figure index.
+%
+%  S = number of samples, P = number of parameters
 
 
 % permute params if the samples are lie along the 3rd index
@@ -9,10 +18,11 @@ if (size(params,1)==1 & size(params,3)>1 )
     params = permute(params,[3 2 1]);
 end
 
+
 % set upper and lower quantiles for distribution fill
 upperquant    = 0.978;
 midupperquant = 0.842;
-medquant = 0.5;
+medquant      = 0.5;
 midlowerquant = 0.158;
 lowerquant    = 0.022;
 % number of horizontal subplots
@@ -20,25 +30,23 @@ n_horiz_subplots = 3;
 % legend location
 legend_location = 'NorthWest';
 
-% EGF doses (M)
-x_obsv_idx = 1;
-egf = [          1e-11, 1.72102769e-11,  2.9619363e-11, 5.09757437e-11, 8.77306662e-11, ...
-        1.50986905e-10, 2.59852645e-10, 4.47213595e-10, 7.69666979e-10, 1.32461818e-09, ...
-        2.27970456e-09, 3.92343467e-09, 6.75233969e-09, 1.16209635e-08,          2e-08  ];
-nL = length(egf);
 
-% EGFR expression levels (receptors/cell)
-egfr = [ 24000, 43000, 92000, 120000, 231000, 447000 ];
+% Find and sort EGF doses (M) and EGFR count (/cell) 
+egf  = zeros(1,length(cfg.data));
+egfr = zeros(1,length(cfg.data));
+for d = 1 : length(cfg.data)
+    egf(d) = cfg.data{d}.egf;
+    egfr(d) = cfg.data{d}.egfr;
+end
+egf  = sort(unique(egf));
+egfr = sort(unique(egfr));
+nL = length(egf);
 nR = length(egfr);
 
 
 % get index of observables to display
-%if isfield(cfg, 'obsv_display')
-%    obsv_disp = find(cfg.obsv_display);
-%else
-%    obsv_disp = [1 : cfg.nobsv];
-%end
-obsv_disp = [5 7];
+obsv_freelig = [cfg.obsv_map.LigFree];
+obsv_disp = [cfg.obsv_map.RecBound, cfg.obsv_map.RecDimer];
 
 
 % dimensions
@@ -46,47 +54,10 @@ N = length(obsv_disp); % display observables
 O = cfg.nobsv;         % observables
 S = size(params,1);    % param samples
 
-% x/y axis limits
-if ( isfield(cfg,'plot_xlim') )
-    %xlim( cfg.plot_xlim );
-    plot_xlim = [7e-12 2.5e-8];
-else
-    plot_xlim = [7e-12 2.5e-8];
-end
-
-for o = 1:O
-    if ( isfield(cfg,'plot_ylims') )
-        %plot_ylims{o} = cfg.plot_ylims{o};
-        plot_ylims{o} = [0 1.05];
-    else
-        plot_ylims{o} = [0 1.05];
-    end
-end
-
-
-% style for errorbars
-errbar_style = {'o','o','o','o','o','o'};
-errbar_color = {[0 0 0.7], [0 0.7 0], [0.7 0 0], [0 0.7 0.7], [0.7 0 0.7],[0.2 0.2 0.2]};
-% style for lines
-line_style = {'-b','-g','-r','-c','-m','-k'};
-% style for fill
-fill_style = {'b','g','r','c','m','k'};
-
-% xlabel
-xlabel_string = 'log [Free EGF] (M)';
-
-% define ylabels
-ylabel_strings = {};
-for o = obsv_disp
-    ylabel_strings{o} = sprintf( '%s (%s)', cfg.obsv_names{o}, cfg.obsv_units{o} );
-end
-
-% experiment stings
-expt_strings = { 'R/cell=24k', 'R/cell=43k', 'R/cell=92k', 'R/cell=120k', 'R/cell=231k', 'R/cell=447k' };
 
 % simulate experiments
 expt = {};
-for r = 1 : nR
+for r = 1:nR
 
     expt{r}.egf  = egf;
     expt{r}.egfr = egfr(r);
@@ -121,22 +92,35 @@ for r = 1 : nR
             % transform observables from counts to fractions
             [obsv] = norm_obsv(obsv(end,:),params,cfg);
 
-            % convert free ligand to concentration
-            totals = [egf(l) 1 1 1 1 1 1 1 ];
-            obsv = obsv .* totals;
+            % convert free ligand fraction to concentration
+            obsv(obsv_freelig) = obsv(obsv_freelig) * egf(l);
 
+            % save observables
             expt{r}.obsv(1,:,s) = obsv;
     
         end
 
+        % compute quantiles
+        expt{r}.obsv_min(l,:)   = quantile( expt{r}.obsv(1,:,:), 0.0, 3);
         expt{r}.obsv_lower(l,:) = quantile( expt{r}.obsv(1,:,:), lowerquant, 3);
         expt{r}.obsv_med(l,:)   = quantile( expt{r}.obsv(1,:,:), medquant, 3);
         expt{r}.obsv_upper(l,:) = quantile( expt{r}.obsv(1,:,:), upperquant, 3);
-
+        expt{r}.obsv_max(l,:)   = quantile( expt{r}.obsv(1,:,:), 1.0, 3);
 
         % get lab measurements
-        expt{r}.mean(l,:)   = cfg.data{n}.mean(end,:) .* totals;
-        expt{r}.stderr(l,:) = cfg.data{n}.stdev(end,:) .* totals ./ sqrt(cfg.data{n}.nsamples(end,:)) ;
+        expt{r}.mean(l,:)   = cfg.data{n}.mean(end,:);
+        % convert free ligand fraction to concentration
+        expt{r}.mean(l,obsv_freelig) = expt{r}.mean(l,obsv_freelig) * egf(l);
+
+        expt{r}.stderr(l,:) = cfg.data{n}.stdev(end,:) ./ sqrt(cfg.data{n}.nsamples(end,:));
+        % convert free ligand fraction to concentration
+        expt{r}.stderr(l,obsv_freelig) = expt{r}.stderr(l,obsv_freelig) * egf(l);
+
+        % show progress
+        fprintf(1,'.');
+        if mod((r-1)*nL + l, 72)==0
+            fprintf(1,'\n');
+        end
 
     end
 
@@ -151,6 +135,56 @@ set( fh,'PaperOrientation','landscape');
 hold off;
 
 
+% style for errorbars
+errbar_style = {'o','o','o'};
+errbar_color = {[0 0 0.7], [0 0.7 0], [0.7 0 0]};
+% style/color for lines
+line_style = {'-b','-g','-r'};
+% color for fill
+fill_style = {'b','g','r'};
+
+
+% xlabel
+xlabel_string = sprintf( 'log10 [%s]', cfg.obsv_names{obsv_freelig} );
+
+
+% define ylabels
+ylabel_strings = {};
+for o = obsv_disp
+    ylabel_strings{o} = sprintf( '%s (%s)', cfg.obsv_names{o}, cfg.obsv_units{o} );
+end
+
+
+% experiment stings
+expt_strings = {};
+for r = 1:nR
+    expt_strings{r} = sprintf('R/cell=%dk', round(egfr(r)/1000) );
+end
+
+
+% x axis limits
+min_freelig = Inf;
+max_freelig = -Inf;
+for r = 1:nR
+    if min_freelig > min( expt{r}.obsv_min(:,obsv_freelig) )
+        min_freelig = min( expt{r}.obsv_min(:,obsv_freelig) );
+    end
+    if max_freelig < max( expt{r}.obsv_max(:,obsv_freelig) )
+        max_freelig = max( expt{r}.obsv_max(:,obsv_freelig) );
+    end
+end
+plot_xlim = [min_freelig*10/11, max_freelig*11/10];
+% y axis limits
+for o = 1:O
+    if ( isfield(cfg,'plot_ylims') )
+        plot_ylims{o} = cfg.plot_ylims{o};
+    else
+        plot_ylims{o} = [0 1.05];
+    end
+end
+
+
+% plot curves
 for n = 1:N
     
     % get observable index
@@ -159,16 +193,12 @@ for n = 1:N
     sph = subplot( ceil(N/n_horiz_subplots), min(n_horiz_subplots,N), n);
     for r = 1:nR
 
-        objh = fill( log10([expt{r}.obsv_med(:,x_obsv_idx); flipud(expt{r}.obsv_med(:,x_obsv_idx))]), ...
+        objh = fill( log10([expt{r}.obsv_med(:,obsv_freelig); flipud(expt{r}.obsv_med(:,obsv_freelig))]), ...
                      [expt{r}.obsv_lower(:,o); flipud(expt{r}.obsv_upper(:,o)) ], ...
-                     fill_style{r}, 'EdgeColor', 'none', 'FaceAlpha', 0.3, 'EdgeAlpha', 0.7 ); %'EdgeColor', 'none', 'EdgeAlpha', 0.8 
+                     fill_style{r}, 'EdgeColor', 'none', 'FaceAlpha', 0.3, 'EdgeAlpha', 0.7 );
         set( get(get(objh,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
         hold on;
-        %objh = fill( [sim_t; flipud(sim_t)], [sim_midlower{d}(:,o); flipud(sim_midupper{d}(:,o))], ...
-        %             fillstyle{d}, 'FaceAlpha', 0.3, 'EdgeColor', 'none', 'EdgeAlpha', 0.8);
-        %set( get(get(objh,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
-        %hold on;
-        plot( log10(expt{r}.obsv_med(:,x_obsv_idx)), expt{r}.obsv_med(:,o), line_style{r}, 'linewidth', 1.1 );
+        plot( log10(expt{r}.obsv_med(:,obsv_freelig)), expt{r}.obsv_med(:,o), line_style{r}, 'linewidth', 1.1 );
        
     end
 
@@ -176,12 +206,10 @@ for n = 1:N
         % plot errorbars (if any)
         if (n~=1) continue; end;
         if ( any(~isnan(expt{r}.mean(:,o))) )
-            ebh = errorbar( log10(expt{r}.mean(:,x_obsv_idx)), expt{r}.mean(:,o), ...
+            ebh = errorbar( log10(expt{r}.mean(:,obsv_freelig)), expt{r}.mean(:,o), ...
                             expt{r}.stderr(:,o), expt{r}.stderr(:,o), ...
                             errbar_style{r}, 'color', errbar_color{r}, 'linewidth', 1.1 );
             set( get(get(ebh,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
-            % increase width of errorbars
-            adjust_errorbars( ebh, plot_xlim );
         end
     end
 
@@ -206,20 +234,4 @@ end
 % end plot_distr function
 end
 
-
-
-function [] = adjust_errorbars( ebh, xlims )
-% increase width of errorbars  
-    ebh = get(ebh,'children');
-    bardata = get(ebh(2),'Xdata');
-    left_idx = sort( [4:9:length(bardata), 7:9:length(bardata)] );
-    right_idx = sort( [5:9:length(bardata), 8:9:length(bardata)] );
-    % compute centers and width
-    centerdata = (bardata(left_idx) + bardata(right_idx))/2;
-    width = (xlims(2)-xlims(1))/40;
-    % adjust errorbars
-    bardata(left_idx)  = centerdata - width;
-    bardata(right_idx) = centerdata + width;
-    set(ebh(2),'Xdata',bardata);
-end
 
