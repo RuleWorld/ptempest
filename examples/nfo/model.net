@@ -1,0 +1,78 @@
+# Created by BioNetGen 2.2.4
+substanceUnits("Number")
+begin parameters
+    1 S         1  # Constant
+    2 YT_0      1  # Constant
+    3 RT_0      1  # Constant
+    4 log_k1    0  # Constant
+    5 log_k2    -4.605  # Constant
+    6 log_k2p   2.303  # Constant
+    7 log_k3    -2.303  # Constant
+    8 log_Km3   -4.605  # Constant
+    9 log_k4    -1.609  # Constant
+   10 log_Km4   -4.605  # Constant
+   11 log_k5    -2.303  # Constant
+   12 log_Km5   -4.607  # Constant
+   13 log_k6    -2.996  # Constant
+   14 log_Km6   -4.607  # Constant
+   15 rateLaw1  exp(log_k1)*S  # ConstantExpression
+   16 rateLaw2  exp(log_k2)  # ConstantExpression
+   17 rateLaw3  exp(log_k2p)  # ConstantExpression
+end parameters
+begin molecule types
+    1 X()
+    2 R(c~0~P)
+    3 Y(c~0~P)
+end molecule types
+begin observables
+    1 Molecules XT X()
+    2 Molecules YP Y(c~P)
+    3 Molecules YT Y()
+    4 Molecules RP R(c~P)
+    5 Molecules RT R()
+end observables
+begin functions
+    1 rateLaw4() exp(log_k3)/(exp(log_Km3)+(YT-YP))
+    2 rateLaw5() exp(log_k4)/(exp(log_Km4)+YP)
+    3 rateLaw6() exp(log_k5)/(exp(log_Km5)+(RT-RP))
+    4 rateLaw7() exp(log_k6)/(exp(log_Km6)+RP)
+end functions
+begin species
+    1 X()     0
+    2 Y(c~0)  YT_0
+    3 Y(c~P)  0
+    4 R(c~0)  RT_0
+    5 R(c~P)  0
+end species
+begin reaction rules
+  Rule1:  0 -> X()  rateLaw1
+  # Add Species X()
+  Rule2:  X() -> 0  rateLaw2
+  # Delete Pattern X()
+  Rule3:  X() + R(c~P) -> R(c~P)  rateLaw3
+  # Delete Pattern X()
+  Rule4:  Y(c~0) + X() -> Y(c~P) + X()  rateLaw4()
+  # StateChange(0.0.0,0->P)
+  Rule5:  Y(c~P) -> Y(c~0)  rateLaw5()
+  # StateChange(0.0.0,P->0)
+  Rule6:  R(c~0) + Y(c~P) -> R(c~P) + Y(c~P)  rateLaw6()
+  # StateChange(0.0.0,0->P)
+  Rule7:  R(c~P) -> R(c~0)  rateLaw7()
+  # StateChange(0.0.0,P->0)
+end reaction rules
+begin reactions
+    1 0 1 rateLaw1 #Rule1
+    2 1 0 rateLaw2 #Rule2
+    3 1,5 5 rateLaw3 #Rule3
+    4 2,1 3,1 rateLaw4 #Rule4
+    5 3 2 rateLaw5 #Rule5
+    6 4,3 5,3 rateLaw6 #Rule6
+    7 5 4 rateLaw7 #Rule7
+end reactions
+begin groups
+    1 XT                   1
+    2 YP                   3
+    3 YT                   2,3
+    4 RP                   5
+    5 RT                   4,5
+end groups

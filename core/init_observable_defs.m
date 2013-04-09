@@ -6,17 +6,15 @@ function [cfg] = init_observable_defs( obsv_defs, cfg )
     cfg.obsv_units = {};
     cfg.obsv_display = ones(1,cfg.nobsv);
     cfg.plot_ylims = {};
+    cfg.obsv_to_norm = [];  % index of observables that will be normalized
+    cfg.obsv_norm_by = [];  % index of observables used to normalize the above
 
-    found_norm  = 0;
     for o = 1:cfg.nobsv
         % map from observable names to indices
         cfg.obsv_map.(obsv_defs{o}.name) = o;
         % set up structs
         cfg.obsv_names{o} = obsv_defs{o}.name;
         cfg.obsv_units{o} = obsv_defs{o}.units;
-        if isfield(obsv_defs{o}, 'norm')
-            found_norm = 1;            
-        end
         if isfield(obsv_defs{o}, 'display')
             cfg.obsv_display(o) = obsv_defs{o}.display;
         end
@@ -34,11 +32,11 @@ function [cfg] = init_observable_defs( obsv_defs, cfg )
         end
     end
 
-    if found_norm
-        % find index of observable for normalization
-        cfg.obsv_norms = zeros(1,cfg.nobsv);
-        for o = 1:cfg.nobsv
-            cfg.obsv_norms(o) = cfg.obsv_map.(obsv_defs{o}.norm);
+    % do a second pass to find normalizations
+    for o = 1:cfg.nobsv
+        if isfield(obsv_defs{o}, 'norm')
+            cfg.obsv_to_norm = [cfg.obsv_to_norm, o];
+            cfg.obsv_norm_by = [cfg.obsv_norm_by, cfg.obsv_map.(obsv_defs{o}.norm) ];
         end
     end
 

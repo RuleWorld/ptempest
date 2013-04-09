@@ -1,0 +1,72 @@
+# Negative-feedback oscillator
+#
+# model 2a from the paper:
+#  "Sniffers, buzzers, toggles and blinkers"
+#  John J Tyson, Katherine C Chen, Bela Novak
+#  Current Opinion in Cell Biology, 2003.
+#
+# Coded in BNGL by justin.s.hogg, 2013
+begin model
+begin parameters
+    # input signal
+    S         1      # no units
+    # total Y and R
+    YT_0      1      # uM
+    RT_0      1      # uM
+    # kinetic parameters
+    log_k1    0      # 1 uM/s
+    log_k2   -4.605  # 0.01 /s
+    log_k2p   2.303  # 10 /uM/s
+    log_k3   -2.303  # 0.1  /s
+    log_Km3  -4.605  # 0.01 uM
+    log_k4   -1.609  # 0.2 uM/s
+    log_Km4  -4.605  # 0.01 uM
+    log_k5   -2.303  # 0.1 /s
+    log_Km5  -4.607  # 0.01 uM
+    log_k6   -2.996  # 0.05 uM/s
+    log_Km6  -4.607  # 0.01 uM
+end parameters
+begin molecule types
+    X()
+    Y(c~0~P)
+    R(c~0~P)
+end molecule types
+begin seed species
+    X()     0
+    Y(c~0)  YT_0
+    Y(c~P)  0
+    R(c~0)  RT_0
+    R(c~P)  0
+end seed species
+begin observables
+    Molecules  XT  X()
+    Molecules  YP  Y(c~P)
+    Molecules  YT  Y()
+    Molecules  RP  R(c~P)
+    Molecules  RT  R()
+end observables
+begin reaction rules
+    # X synthesis
+    0 -> X()  exp(log_k1)*S
+    # X degradation
+    X -> 0    exp(log_k2)
+    # X degradation, Rp feedback
+    X + R(c~P) -> R(c~P)       exp(log_k2p)
+    # phos/dephos of Y
+    Y(c~0) + X -> Y(c~P) + X   exp(log_k3)/(exp(log_Km3) + (YT-YP))
+    Y(c~P)     -> Y(c~0)       exp(log_k4)/(exp(log_Km4) + YP)
+    # phos/dephos of R
+    R(c~0) + Y(c~P) -> R(c~P) + Y(c~P)   exp(log_k5)/(exp(log_Km5) + (RT-RP))
+    R(c~P)          -> R(c~0)            exp(log_k6)/(exp(log_Km6) + RP)
+end reaction rules
+end model
+
+# generate reaction network
+generate_network({overwrite=>1})
+
+# generate ODE23s integrator for Matlab..
+#writeMfile({t_start=>0,t_end=>60,n_steps=>10,atol=>1e-6,rtol=>1e-6})
+
+# generate CVODE integrator w/ Mex interface.. Faster, but requires a compiler.
+writeMexfile({t_start=>0,t_end=>60,n_steps=>10,atol=>1e-6,rtol=>1e-6})
+

@@ -1,5 +1,5 @@
 function [energy] = energy_tdistr( params, cfg )
-%ENERGY_TDISTR Calculate parameter energy using t-distribution
+%ENERGY_TDISTR Calculate parameter energy using t-distribution likelihood model
 % 
 %  [energy] = energy_tdistr( params, cfg )
 
@@ -36,7 +36,10 @@ for d = 1:cfg.nexpt
         return;
     end
 
-    % heuristic penalties
+    % normalize obsv
+    [obsv] = norm_obsv( obsv, params, cfg );
+
+    % heuristic penalties (do this before transformating obsv)
     if isfield(cfg.data{d}, 'heuristic_penalty_fcn')
         penalty = cfg.data{d}.heuristic_penalty_fcn(obsv, params);
         if isinf(penalty)

@@ -100,20 +100,11 @@ for s = 1:S
     % loop over experiments
     for d = 1:D
 
-        % experiment specific settings?
-        % equillibrate?
-
-        % simulate w/ this parameter set
-        if isfield( cfg.data{d}, 'protocol_fcn' )
-            [err, ~, obsv] = cfg.data{d}.protocol_fcn( sim_t, init, params(s,:) );
-            if (err) return; end
-        elseif isfield( cfg, 'simulate_fcn' )
-            [err, ~, obsv] = cfg.simulate_fcn( sim_t, init, params(s,:) );
-            if (err) return; end
-        end
-
-        % save results
-        sim_obsv{d}(:,:,s) = obsv;
+        % simulate experiment
+        [err, ~, obsv] = cfg.data{d}.protocol_fcn( sim_t, init, params(s,:) );
+        if (err) return; end
+        % normalize and save results
+        sim_obsv{d}(:,:,s) = norm_obsv( obsv, params(s,:), cfg );
 
     end
 

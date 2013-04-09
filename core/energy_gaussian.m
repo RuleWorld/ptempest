@@ -1,5 +1,5 @@
-function [energy] = energy_generic( params, cfg )
-%ENERGY_GENERIC Calculate parameter energy (log-likelihood) for generic model
+function [energy] = energy_gaussian( params, cfg )
+%ENERGY_GAUSSIAN Calculate parameter energy for gaussian likelihood model
 % 
 %  [energy] = energy_generic( params, cfg )
 
@@ -36,7 +36,10 @@ for d = 1:cfg.nexpt
         return;
     end
 
-    % heuristic penalties
+    % normalize obsv
+    [obsv] = norm_obsv( obsv, params, cfg );
+
+    % heuristic penalties (do this before transformating obsv)
     if isfield(cfg.data{d}, 'heuristic_penalty_fcn')
         penalty = cfg.data{d}.heuristic_penalty_fcn(obsv, params);
         if isinf(penalty)
