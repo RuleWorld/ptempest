@@ -119,7 +119,7 @@ for r = 1 : nR
             end
         
             % transform observables from counts to fractions
-            obsv = counts_to_fraction(obsv(end,:),params,cfg);
+            [obsv] = norm_obsv(obsv(end,:),params,cfg);
 
             % convert free ligand to concentration
             totals = [egf(l) 1 1 1 1 1 1 1 ];

@@ -19,7 +19,7 @@ cfg = init_config_defaults();
 %   'boundedlaplace', args: 'mu', 'b', 'min', 'max'
 %   'beta',           args: 'alpha', 'beta'
 %   'exponential',    args: 'mu'
-scale = 1;  % global weight parameter for prior strength (or "width"). scale>0.
+scale = 0.5;  % global weight parameter for prior strength (or "width"). scale>0.
 cfg.param_defs = { ...
   struct('name','S',       'prior','point', 'value', 1, 'units','(none)' ), ...
   struct('name','YT_0',    'prior','point', 'value', 1, 'units','uM' ), ...% 1 uM
@@ -45,12 +45,10 @@ cfg = init_parameter_defs( cfg.param_defs, cfg );
 %  minplot/maxplot to see y-axis bounds in visualization scripts.
 %  The 'norm' field should be the name of the observable that is used to
 %  normalize the observable (e.g. YP is normalized by YT, the total quantity
-%  of Y). Leave this field empty if normalization is not desired. NOTE that
-%  normalize is only active if your custom protocol function calls
-%  the function: [obsv] = norm_obsv( obsv, params, cfg ).
+%  of Y). Leave this field empty if normalization is not desired.
 cfg.obsv_defs = { ...
-  struct('name','XT', 'units','fraction',              'display',0, 'minplot',0, 'maxplot',1.05), ...
-  struct('name','YP', 'units','fraction', 'norm','YT', 'display',0, 'minplot',0, 'maxplot',1.05), ...
+  struct('name','XT', 'units','fraction',              'display',1, 'minplot',0, 'maxplot',6.0), ...
+  struct('name','YP', 'units','fraction', 'norm','YT', 'display',1, 'minplot',0, 'maxplot',1.0), ...
   struct('name','YT', 'units','fraction',              'display',0, 'minplot',0, 'maxplot',1.05), ...
   struct('name','RP', 'units','fraction', 'norm','RT', 'display',1, 'minplot',0, 'maxplot',0.30), ...
   struct('name','RT', 'units','fraction',              'display',0, 'minplot',0, 'maxplot',1.05) ...
@@ -73,16 +71,16 @@ cfg.timepenalty = 0;
 % Defaults are usually ok. Things you may want to change: jobname, nchains,
 % parallel, nswaps, adapt_last, energy_init_max, relstep_init.
 % See core/init_config_defaults.m for a complete list of config options.
-cfg.jobname = 'nfbkosc_pt';            % job name, for file input/output
+cfg.jobname = 'nfo_pt';                % job name, for file input/output
 cfg.parallel = 0;                      % parallel? true/false
 cfg.maxlabs  = 4;                      % maximum number of labs for parallel computing
 cfg.nchains  = 4;                      % number of chains
 cfg.nswaps = 15000;                    % number of chain swaps (=number of saved samples!)
 cfg.nsteps = 25;                       % number of steps between chain swaps
-cfg.display_status_interval = 1;       % How often to display info
+cfg.display_status_interval = 10;      % How often to display info
 cfg.save_progress_interval = 1000;     % How often to save progress 
 cfg.adapt_last = 4900;                 % last adaption step
-cfg.energy_init_max = 100;             % maximum allowed energy for initialization
+cfg.energy_init_max = 160;             % maximum allowed energy for initialization
 cfg.beta_init = 0.666;                 % beta initialization parameter
 cfg.relstep_init = 0.05;               % relstep initialization parameter
 
@@ -138,7 +136,7 @@ cfg = setup_default_functions( cfg );
 %cfg.equilibrate_fcn = @(params) ( <insert custom function here> );
 
 
-% Define a simulation protocol for each experiment [REQUIRED]
+% Define a simulation protocol for each experiment [REQUIRED!]
 %
 % pass extra options to the protocol fcn here:
 args = struct( ...
@@ -156,12 +154,10 @@ for d = 1 : cfg.nexpt
 end
 
 
-% Energy function [optional]
+% Energy function [REQUIRED!]
 %   prototype: [energy] = @(params)
 %
-% NOTE: default is log-t-distribution (handles small samples better than square residual)
-%
-%cfg.energy_fcn = @(params) ( <insert custom function here> )
+cfg.energy_fcn = @(params) energy_tdistr(params, cfg);
 
 
 

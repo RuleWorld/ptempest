@@ -11,8 +11,8 @@ function [err, sp, obsv] = simulate_pike( t, init, params, egf0, egfr0, cfg )
 %  initial conditions are with respect to the first time point, not
 %  necessarily t=0.  
 %
-%  Time units are seconds. The state trajectories are computed in 
-%  absolute counts, while observables are reported as fractions.
+%  Time units are seconds. The state and observables trajectories have units
+%  of absolute counts.
 
 
 if isempty(init)
@@ -44,9 +44,6 @@ else
     end
 
 end
-
-% transform observables from counts to fractions
-obsv = counts_to_fraction(obsv,params,cfg);
 
 return;
 

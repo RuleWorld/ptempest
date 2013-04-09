@@ -5,8 +5,22 @@ function [cfg] = config_pike()
 %
 
 
-% define parameters
-scale = 1;
+
+% Initialize default configuration options 
+cfg = init_config_defaults();
+
+
+%% Parameter definitions (see BNGL model for parameter descriptions) [REQUIRED]
+% Available prior distributions:
+%   'point'           args: 'value'
+%   'uniform'         args: 'min', 'max'
+%   'normal',         args: 'mu', 'sigma'
+%   'lognormal',      args: 'mu', 'sigma'
+%   'laplace',        args: 'mu', 'b'
+%   'boundedlaplace', args: 'mu', 'b', 'min', 'max'
+%   'beta',           args: 'alpha', 'beta'
+%   'exponential',    args: 'mu'
+scale = 1;       % global weight parameter for prior strength (or "width"). scale>0.
 RT = 2.5774863;
 % parameter definitions (see BNGL model for parameter descriptions)
 cfg.param_defs = { ...
@@ -30,42 +44,68 @@ cfg.param_defs = { ...
 cfg = init_parameter_defs( cfg.param_defs, cfg );
 
 
-% observable definitions
+%% Observable definitions [REQUIRED]
+%  Set display=0 to disable observable plot during visualization. Set
+%  minplot/maxplot to see y-axis bounds in visualization scripts.
+%  The 'norm' field should be the name of the observable that is used to
+%  normalize the observable. Leave this field empty if normalization is not
+%  desired.
 cfg.obsv_defs = { ...
   struct('name','LigFree',  'units','fraction', 'norm','LigTotal', 'display',1, 'minplot',0, 'maxplot',1.05), ...
-  struct('name','LigTotal', 'units','fraction', 'norm','LigTotal', 'display',0, 'minplot',0, 'maxplot',1.05), ...
+  struct('name','LigTotal', 'units','fraction',                    'display',0, 'minplot',0, 'maxplot',1.05), ...
   struct('name','RecBound', 'units','fraction', 'norm','RecTotal', 'display',1, 'minplot',0, 'maxplot',1.05), ...
   struct('name','RecDimer', 'units','fraction', 'norm','RecTotal', 'display',1, 'minplot',0, 'maxplot',1.05), ...
-  struct('name','RecTotal', 'units','fraction', 'norm','RecTotal', 'display',0, 'minplot',0, 'maxplot',1.05) ...
+  struct('name','RecTotal', 'units','fraction',                    'display',0, 'minplot',0, 'maxplot',1.05) ...
 };
 % initialize observable structs
 cfg = init_observable_defs( cfg.obsv_defs, cfg );
 
 
+% parameters for visualizing trajectories [REQUIRED only for visualization]
+cfg.time_units = 's';                               % time units
+cfg.sim_tstart = 0;                                 % simulation start time, sec
+cfg.sim_tstop  = 120;                               % simulation stop time, sec
+cfg.sim_dt     = 0.5;                               % time step for trajectory, sec
 
-% simulation parameters
-cfg.time_units = 's';            % time units
+% penalty for long integration times
+cfg.timepenalty = 25;
+
+% additional simulation parameters
 cfg.time = [0 1 10 100 1000]';   % time vector for equilibration
 cfg.Egf_species_idx  = 1;        % index of Egf  species (for setting concentrations)
 cfg.Egfr_species_idx = 2;        % index of Egfr species (for setting concentrations)
 
 % unit conversions
 cfg.counts_per_mol  = 6.0221e23;  % counts/mol
-% parameters for controller errors, etc
-cfg.big_energy = 1e29;    % large energy value
-cfg.tolerance  = 1e-12;   % tolerance factor for comparing things to zero
-
-% penalty for long integration times
-cfg.timepenalty = 25;
-
-% parameters for plotting simulations
-cfg.sim_tstart = 0;                                 % simulation start time, sec
-cfg.sim_tstop  = 120;                               % simulation stop time, sec
-cfg.sim_dt     = 0.5;                               % time step for trajectory, sec
-cfg.plot_xlim = [cfg.sim_tstart, cfg.sim_tstop];    % x-axis limits for plotting experiments
 
 
-% load experimental data
+%% Parallel temperating options
+% Defaults are usually ok. Things you may want to change: jobname, nchains,
+% parallel, nswaps, adapt_last, energy_init_max, relstep_init.
+% See core/init_config_defaults.m for a complete list of config options.
+cfg.jobname = 'pike_pt';               % job name, for file input/output
+cfg.parallel = 0;                      % parallel? true/false
+cfg.maxlabs  = 3;                      % maximum number of labs for parallel computing
+cfg.nchains  = 3;                      % number of chains
+cfg.nswaps = 8000;                     % number of chain swaps (=number of saved samples!)
+cfg.nsteps = 25;                       % number of steps between chain swaps
+cfg.display_status_interval = 5;       % How often to display info
+cfg.save_progress_interval = 1000;     % How often to save progress 
+cfg.adapt_last = 2900;                 % last adaption step
+cfg.energy_init_max = 180;             % maximum allowed energy for initialization
+cfg.beta_init = 0.56;                  % beta initialization parameter
+cfg.relstep_init = 0.02;               % relstep initialization parameter
+
+
+%% Load experimental data [REQUIRED].
+% The data file should import a cell array called "expt".
+% Each cell array contains data for an experiment. It should define
+%  the fields 'time', 'mean', 'stdev', 'nsamples' and 'weight'.
+%  each array should have dimensions T x O, where T is the number of
+%  time points and O is the number of observables, except for 'time'
+%  which is is a column vector of length T. Set weight=0 if an observation
+%  is missing or hidden (e.g. for future validation).  Missing data may be
+%  indicated by NaN (not-a-number).
 load synthdata_pike;
 % get number of experiments
 cfg.nexpt = length(expt);
@@ -82,77 +122,58 @@ for d = 1 : cfg.nexpt
 end
 
 
-% parallel temperating options
-cfg.jobname = 'pike_pt';               % job name, for file input/output
-cfg.shuffle  = 1;                      % shuffle random number streams (seed by clock)
-cfg.parallel = 0;                      % parallel? true/false
-cfg.maxlabs  = 2;                      % maximum number of labs for parallel computing
-cfg.nchains  = 2;                      % number of chains
-cfg.nswaps = 5000;                     % number of chain swaps
-cfg.nsteps = 25;                       % number of steps between chain swaps
-cfg.display_status_interval = 1;       % How often to display info
-cfg.save_progress_interval = 250;      % How often to save progress 
-cfg.adapt_relstep_interval = 100;      % How often to adapt relative step size
-cfg.adapt_relstep_rate = 0.24;         % relative step size adaption rate
-cfg.optimal_step_acceptance = 0.23;    % optimal rate of step acceptance
-cfg.adapt_beta_interval = 250;         % how often to adapt temperature gradient
-cfg.adapt_beta_rate = 0.05;            % beta adaption rate
-cfg.optimal_swap_acceptance = 0.23;    % optimal rate of swap acceptance
-cfg.adapt_last = 1200;                 % last adaption step
-cfg.min_adaption_factor = 0.80;        % minimum adaption factor
-cfg.max_adaption_factor = 1.25;        % maximum adaption factor
-cfg.energy_init_max = 1200;            % maximum allowed energy for initialization
-cfg.max_beta = 1.0;                    % maximum chain beta (inverse of minimum chain temperature)
-cfg.beta_init = 0.56;                  % beta initialization parameter
-cfg.relstep_init = 0.02;               % relstep initialization parameter
-
-% suffix and regex for progress and init files
-cfg.progress_suffix = 'progress';
-cfg.progress_regex  = sprintf( '%s_%s*.mat', cfg.jobname, cfg.progress_suffix );
-cfg.init_suffix = 'init';
-cfg.init_regex  = sprintf( '%s_%s*.mat', cfg.jobname, cfg.init_suffix );
+%% load default functions
+cfg = setup_default_functions( cfg );
 
 
-%% define custom function handles
-% initial proposal generator
-%   template: [params] = @()
-cfg.sample_prior_fcn = @() sample_prior(cfg);
+%% setup custom function handles
 
-% parameter prior
-%   template: [logpdf] = @(params)
-cfg.logpdf_prior_fcn = @(params) logpdf_prior(params,cfg);
+% Sample parameter prior function [optional]:
+%   prototype: [params] = @()
+%
+%cfg.sample_prior_fcn = @() ( <insert custom function here> );
 
-% equilibration protocol
-%   template: [err,sim,obsv] = @(params)
-%cfg.equilibrate_fcn = @(params) ( ... );
 
-% simulation protocols
-%   template: [err,sim,obsv] = @(t,init,params)
-% gather arguments required by protocols
+% Log-prior pdf function [optional]:
+%   prototype: [logpdf] = @(params)
+%
+%cfg.logpdf_prior_fcn = @(params) logpdf_prior( <insert custom function here> );
+
+
+% Equilibration protocol function [optional]:
+%   prototype: [err,sim,obsv] = @(params)
+%
+% NOTE: Equilibration is performed once per parameter set. If equilibration
+% is dependent on the protocol, include equilibration in protocol function.
+%
+%cfg.equilibrate_fcn = @(params) ( <insert custom function here> );
+
+
+% Define a simulation protocol for each experiment [REQUIRED!]
+%
+% pass extra options to the protocol fcn here:
 args = struct( ...
-    'param_map', cfg.param_map, ...
-    'counts_per_mol', cfg.counts_per_mol, ...
-    'Egf_species_idx',  cfg.Egf_species_idx, ...
+    'param_map',        cfg.param_map,        ...% useful for finding params by name
+    'counts_per_mol',   cfg.counts_per_mol,   ...
+    'Egf_species_idx',  cfg.Egf_species_idx,  ...
     'Egfr_species_idx', cfg.Egfr_species_idx, ...
-    'obsv_norms', cfg.obsv_norms ...
+    'obsv_to_norm',     cfg.obsv_to_norm,     ...% required by "norm_obsv"
+    'obsv_norm_by',     cfg.obsv_norm_by      ...% required by "norm_obsv"
 );
+% experiment protocols here:
 for d = 1 : cfg.nexpt
+    % protocol specific parameters:
     egf0  = cfg.data{d}.egf;
     egfr0 = cfg.data{d}.egfr;
+    % Experimental protocol function:
+    %   prototype: [err,sim,obsv] = @(t,init,params)
     cfg.data{d}.protocol_fcn = @(t,init,params) simulate_pike(t,init,params,egf0,egfr0,args);
 end
 
-% energy function, use "tdistr" if number of samples is small
-%   template: [energy] = @(params)
-cfg.energy_fcn = @(params) energy_tdistr(params,cfg);
 
-% proposal generator, gaussian default
-%   template: [params] = @(params,epsilon)
-cfg.proposal_fcn = @(params,epsilon) params + epsilon.*randn(1,cfg.nparams);
-
-% update stepsize
-%   template: [stepsize] = @(relstep)
-cfg.update_stepsize_fcn = @(relstep) repmat(relstep, [1 cfg.nparams]).*repmat(cfg.param_scale, [cfg.nchains 1]);
-
+% Energy function [REQUIRED!]
+%   prototype: [energy] = @(params)
+%
+cfg.energy_fcn = @(params) energy_tdistr(params, cfg);
 
 
