@@ -1,0 +1,55 @@
+# Created by BioNetGen 2.2.4
+substanceUnits("Number")
+begin parameters
+    1 S0        4.6052  # Constant
+    2 E0        2.3026  # Constant
+    3 log_k1    -4.6052  # Constant
+    4 log_k2    0.0  # Constant
+    5 log_k3    0.0  # Constant
+    6 rateLaw1  10^log_k1  # ConstantExpression
+    7 rateLaw2  10^log_k2  # ConstantExpression
+    8 rateLaw3  10^log_k3  # ConstantExpression
+end parameters
+begin molecule types
+    1 S()
+    2 P()
+    3 ES()
+    4 E()
+end molecule types
+begin observables
+    1 Molecules S S()
+    2 Molecules E E()
+    3 Molecules ES ES()
+    4 Molecules P P()
+end observables
+begin species
+    1 S()   S0
+    2 E()   E0
+    3 ES()  0
+    4 P()   0
+end species
+begin reaction rules
+  Rule1:  E() + S() <-> ES()  rateLaw1, rateLaw2
+  # Add Species ES()
+  # Delete Pattern E()
+  # Delete Pattern S()
+  # Reverse
+  # Add Species E()
+  # Add Species S()
+  # Delete Pattern ES()
+  Rule2:  ES() -> E() + P()  rateLaw3
+  # Add Species E()
+  # Add Species P()
+  # Delete Pattern ES()
+end reaction rules
+begin reactions
+    1 1,2 3 rateLaw1 #Rule1
+    2 3 1,2 rateLaw2 #Rule1r
+    3 3 2,4 rateLaw3 #Rule2
+end reactions
+begin groups
+    1 S                    1
+    2 E                    2
+    3 ES                   3
+    4 P                    4
+end groups
