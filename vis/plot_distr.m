@@ -21,7 +21,7 @@ midupperquant = 0.842;
 midlowerquant = 0.158;
 lowerquant    = 0.022;
 % number of horizontal subplots
-n_horiz_subplots = 5;
+n_horiz_subplots = 4;
 % legend location
 legend_location = 'NorthEast';
 

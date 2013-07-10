@@ -9,5 +9,5 @@ function [logpdf] = pointlogpdf(x, a)
 %   this function is vectorized
 
 logpdf = zeros(size(x));
-logpdf(find(x~=a)) = -Inf;
+logpdf(find(find(x~=a))) = -Inf;
 

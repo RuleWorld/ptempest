@@ -9,7 +9,12 @@ for chain_idx = 1 : cfg.nchains
     old_relstep = relative_step_size(chain_idx);
     adaption_factor = (step_acceptance_rate(chain_idx)/cfg.optimal_step_acceptance)^cfg.adapt_relstep_rate;
     adaption_factor = min( [max([cfg.min_adaption_factor, adaption_factor]), cfg.max_adaption_factor] );
-    relative_step_size(chain_idx) = adaption_factor*old_relstep;
+    if ( chain_idx > 1  &&  adaption_factor*old_relstep < relative_step_size(chain_idx-1) )
+        % don't let higher temperature chain have smaller step size
+        relative_step_size(chain_idx) = relative_step_size(chain_idx-1);
+    else
+        relative_step_size(chain_idx) = adaption_factor*old_relstep;
+    end
     fprintf(1,'  chain %d: recent acceptance=%-8.3g old relstep=%-8.3g new relstep=%-8.3g\n', ...
        chain_idx, step_acceptance_rate(chain_idx), old_relstep, relative_step_size(chain_idx) );
 end    

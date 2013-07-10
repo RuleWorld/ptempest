@@ -1,8 +1,8 @@
-function [fitness] = plot_fitness( params, cfg, figidx )
+function [loglike,pdf] = plot_fitness( params, cfg, figidx )
 %PLOT_FITNESS Get fitness values for the parameter ensemble
 %
-%  [fitness] = plot_fitness( params, cfg )
-%  [fitness] = plot_fitness( params, cfg, figidx )
+%  [fit,pdf] = plot_fitness( params, cfg )
+%  [fit,pdf] = plot_fitness( params, cfg, figidx )
 %
 %  where 'params' is a (S x P) array of parameters and 'cfg' is the
 %  configuration struct, and 'figidx' is an optional figure index.
@@ -50,22 +50,26 @@ if exist('figidx') fh = figure(figidx);
 else fh = figure; end
 set( fh, 'Color', [1 1 1] );
 
-res=24;
+res=20;
 for k = 1:3
 
     lb = min( fitness(:,k) );
     ub = max( fitness(:,k) );
     edges = linspace( lb, ub, res )';
 
-    [N] = histc( fitness(:,k), edges(1:end-1) );
+    [N] = histc( fitness(:,k), edges );
+    N(end-1) = N(end-1) + N(end);
+    N = N(1:end-1)
     pdf = N/sum((edges(2:end)-edges(1:end-1)).*N);
 
     subplot(1,3,k);
-    bar(edges(1:end-1),pdf,'histc');
+    bar((edges(2:end)+edges(1:end-1))/2,pdf,'histc');
     xlabel( sprintf('%s', xlabel_strings{k}), 'Interpreter', 'none' );
     ylabel( ylabel_string );
     
 end
+
+loglike = edges(1:end-1);
 
 % end plot_distr function
 end
