@@ -12,7 +12,6 @@ for counter = 1 : cfg.max_init_steps
         energy_init = energy;
         params_init = params;
     end
-    fprintf( 1, 'counter=%d, energy_init=%g, energy=%g\n', counter, energy_init, energy );
     if ( mod(counter,5)==0 )
         fprintf( 1, '  . . . %d attempts (energy curr=%g, best=%g)\n', counter, energy, energy_init );
     end
