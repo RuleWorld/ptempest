@@ -105,8 +105,19 @@ for n = 1:Nplotparams
         xticklabels = sprintf('%.0f|',xticks);
     end
 
-    yticks = [0,2*floor(maxpdf/2)];
-    yticklabels = sprintf('%.0f|',yticks);
+    yticks = [0,maxpdf];
+    mult = 1;
+    while ceil(yticks(1)) >= floor(yticks(2))
+        yticks = yticks*10;
+        mult = mult*10;
+    end
+    yticks = [0,floor(yticks(2))/mult];
+
+    if any( abs(yticks - round(yticks)) > 1e-8 )
+        yticklabels = sprintf('%.1f|',yticks);
+    else
+        yticklabels = sprintf('%.0f|',yticks);
+    end
 
     set(sph, ...
         'XTick',      xticks, ...
