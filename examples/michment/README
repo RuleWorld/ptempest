@@ -1,10 +1,5 @@
 PTempEst example: Michaelis-Menten (MM)
 
-Based on homework 10, problem 3
-Cell and Systems Modeling, Spring 2013
-Carnegie Mellon--University of Pittsburgh
-https://sites.google.com/site/cellandsystemsmodeling/hw10
-
 Essential Files
 -----------------
 run_pt.m        : Simple script to start Parallel tempering
