@@ -1,3 +1,4 @@
+<pre>
 PTempEst - Parallel Tempering for Estimation
 
 directory structure
@@ -11,4 +12,4 @@ ptempest/examples/    : example model configurations.
 ptempest/mex_cvode/   : C language framework for implementing dynamical system
                           models  using the SUNDIALS CVODE integrator with a
                           Matlab MEX interface.
-
+</pre>
