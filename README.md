@@ -1,4 +1,7 @@
 # PTempEst - Parallel Tempering for Estimation
+
+*The 'P' is silent.*
+
 <pre>
 
 directory structure
