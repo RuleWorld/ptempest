@@ -1,5 +1,5 @@
+# PTempEst - Parallel Tempering for Estimation
 <pre>
-PTempEst - Parallel Tempering for Estimation
 
 directory structure
 -------------------
