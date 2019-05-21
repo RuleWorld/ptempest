@@ -1,6 +1,7 @@
 # PTempEst - Parallel Tempering for Estimation
 
 *The 'P' is silent.*
+Justin S. Hogg
 
 <pre>
 
