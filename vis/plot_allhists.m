@@ -1,29 +1,24 @@
-function [] = plot_allhists( samples, cfg, fighandle, figname );
+function [] = plot_allhists( samples, cfg, fh_inp, figname )
 %PLOT_ALLHISTS plot all histograms of parameter samples
 %
 %  [] = plot_allhists( samples, cfg )
 %  [] = plot_allhists( samples, cfg, fighandle )
 %  [] = plot_allhists( samples, cfg, fighandle, figname )
 %  
-%  where 'samples' is a (S x P) array of samples,
+%  where 'samples' is a (P x S) array of samples,
 %  with C=number of chains, P=number of parameters, S=number of samples;
 %  'cfg' is the configuration struct, and 'fighandle' is an optional figure
 %  handle.
-
-
-if and( size(samples,1) == 1, size(samples,3) > 1)
-    samples = permute(samples,[3 2 1]);
-end
 
 % minimum param range to plot
 width = 1.6;
 param_range = [ cfg.param_location - width*cfg.param_scale; cfg.param_location + width*cfg.param_scale ];
 
-nsamples = size(samples,1);
-nparams = size(samples,2);
+nparams = size(samples,1);
+nsamples = size(samples,2);
 
-if exist('fighandle')
-    fh = fighandle;
+if exist('fh_inp')
+    fh = fh_inp;
 else
     fh = gcf;
 end
@@ -33,22 +28,23 @@ set( fh, 'Color', [1 1 1] );
 plotparams = find(cfg.param_scale ~= 0);
 Nplotparams = length(plotparams);
 
-ncols = 5;
+ncols = 2;
 nrows = ceil(Nplotparams/ncols);
 
-res=16;
-for n = 1:Nplotparams
+res=20;
 
+for n = 1:Nplotparams
+    
     p = plotparams(n);
 
     maxpdf = 0;
 
-    lb = min( samples(:,p) );
-    ub = max( samples(:,p) );
+    lb = min( samples(p,:) );
+    ub = max( samples(p,:) );
     edges = linspace( lb, ub, res )';
 
     % get histogram
-    [N] = histc( samples(:,p), edges );
+    [N] = histc( samples(p,:)', edges );
     % get singleton in the last bin and put in previous bin
     N(end-1) = N(end-1)+N(end);
     % now shorten N by 1.
@@ -69,7 +65,8 @@ for n = 1:Nplotparams
     x = linspace( lb, ub, res*10 )';
     fx = cfg.param_pdf{p}(x);
     maxpdf = max([fx; pdf]);
-    plot( x, fx, 'linestyle', '-', 'color', 0.8*[237/255,187/255,78/255], 'linewidth', 1.5 );
+%    plot( x, fx, 'linestyle', '-', 'color', 0.8*[237/255,187/255,78/255], 'linewidth', 1.5 );
+    plot( x, fx, 'linestyle', '-', 'color', 'red', 'linewidth', 1.5 );
     hold on;
 
     bh = bar(edges(1:end-1),pdf,'histc');
@@ -87,11 +84,11 @@ for n = 1:Nplotparams
     end
     xticks = [ceil(xticks(1))/mult,floor(xticks(2))/mult];
 
-    if any( abs(xticks - round(xticks)) > 1e-8 )
-        xticklabels = sprintf('%.1f|',xticks);
-    else
-        xticklabels = sprintf('%.0f|',xticks);
-    end
+%     if any( abs(xticks - round(xticks)) > 1e-8 )
+%         xticklabels = sprintf('%.1f|',xticks);
+%     else
+%         xticklabels = sprintf('%.0f|',xticks);
+%     end
 
     yticks = [0,maxpdf];
     mult = 1;
@@ -106,22 +103,31 @@ for n = 1:Nplotparams
     else
         yticklabels = sprintf('%.0f|',yticks);
     end
-
+    
     set(sph, ...
-        'XTick',      xticks, ...
-        'XTickLabel', xticklabels, ...
-        'YTick',      yticks, ...
-        'YTickLabel', yticklabels, ...
         'Box',        'off', ...
         'TickDir',    'out', ...
-        'TickLength', [.04 .04], ...
+        'TickLength', [.02 .02], ...
         'XMinorTick', 'off', ...
         'YMinorTick', 'off', ...
         'XGrid',      'off', ...
         'YGrid',      'off' ...
-    );
+    );  
+%     set(sph, ...
+%         'XTick',      xticks, ...
+%         'XTickLabel', xticklabels, ...
+%         'YTick',      yticks, ...
+%         'YTickLabel', yticklabels, ...
+%         'Box',        'off', ...
+%         'TickDir',    'out', ...
+%         'TickLength', [.04 .04], ...
+%         'XMinorTick', 'off', ...
+%         'YMinorTick', 'off', ...
+%         'XGrid',      'off', ...
+%         'YGrid',      'off' ...
+%     );
 
-    axis([ lb, ub, 0, maxpdf]);
+    axis([ lb, ub, 0, 1.05*maxpdf]);
     hold off;
 
 end
@@ -141,5 +147,5 @@ set( fh, 'Position', [1 1 10 6] );
 set( fh, 'PaperPositionMode','auto');
 set( fh, 'PaperSize',[10 6]);
 %print(fh, outfile, '-dpdf')
-
-
+return;
+end

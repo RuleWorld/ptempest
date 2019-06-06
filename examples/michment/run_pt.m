@@ -5,13 +5,13 @@
 %   > nohup matlab -r run_pt > run_pt.out 2> run_pt.err < /dev/null &
   
 % path to parallel tempering scripts
-addpath('~/googlecode/ptempest/core/');
+addpath('~/Documents/GitHub/ptempest/core/');
 
 % path to supplementary distributions
-addpath('~/googlecode/ptempest/core/distr/');
+addpath('~/Documents/GitHub/ptempest/core/distr/');
 
 % path to analysis tools (optional)
-addpath('~/googlecode/ptempest/vis/');
+addpath('~/Documents/GitHub/ptempest/vis/');
 
 % path to model-specific files (if not the current directory)
 %addpath('~/googlecode/ptempest/examples/michment/');
