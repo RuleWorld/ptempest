@@ -1,4 +1,4 @@
-# PTempEst - Parallel Tempering for Estimation
+# ptempest - Parallel Tempering for Estimation
 
 *The 'P' is silent.*
 Justin S. Hogg (but the rest of us call it 'pee-tempest'...)
