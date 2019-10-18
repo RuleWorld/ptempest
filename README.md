@@ -1,8 +1,8 @@
 # PTempEst - Parallel Tempering for Estimation
 
 *The 'P' is silent.*
-Justin S. Hogg
-
+Justin S. Hogg (but the rest of us call it 'pee-tempest'...)
+ 
 <pre>
 
 directory structure
