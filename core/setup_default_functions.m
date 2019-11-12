@@ -22,7 +22,8 @@ function [cfg] = setup_default_functions( cfg )
 
     % proposal generator, gaussian default
     %   template: [params] = @(params,epsilon)
-    cfg.proposal_fcn = @(params,epsilon) params + epsilon.*randn(1,cfg.nparams);
+    % cfg.proposal_fcn = @(params,epsilon) params + epsilon.*randn(1,cfg.nparams);
+    cfg.proposal_fcn= @(params,epsilon) proposal_fcn_log(params, epsilon, cfg);
 
     % update stepsize
     %   template: [stepsize] = @(relstep)

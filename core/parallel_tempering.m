@@ -1,4 +1,4 @@
-function [params_chain, energy_chain] = parallel_tempering( cfg );
+            function [params_chain, energy_chain] = parallel_tempering( cfg );
 %PARALLEL_TEMPERING Generate parameter ensemble using parallel tempering method.
 %
 %   [params_chain, energy_chain] = parallel_tempering( cfg )
