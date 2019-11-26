@@ -14,8 +14,8 @@ function [cfg] = init_parameter_defs( param_defs, cfg )
         cfg.param_names{p} = param_def.name;
         if (strcmp(param_def.prior,'point'))
             cfg.param_sample{p} = @() pointrnd( param_def.value );
-            cfg.param_logpdf{p} = @(x) pointlogpdf( x, param_def.value );
-            cfg.param_pdf{p} = @(x) pointpdf( x, param_def.value );
+            cfg.param_logpdf{p} = @(x) 0; %pointlogpdf( x, param_def.value ); %% MODIFIED to allow control parameters to have different values.
+            cfg.param_pdf{p} = @(x) 0; %pointpdf( x, param_def.value );
             cfg.param_location(p) = param_def.value;
             cfg.param_scale(p) = 0;
         elseif (strcmp(param_def.prior,'uniform'))
@@ -24,6 +24,12 @@ function [cfg] = init_parameter_defs( param_defs, cfg )
             cfg.param_pdf{p} = @(x) unifpdf( x, param_def.min, param_def.max );
             cfg.param_location(p) = (param_def.min + param_def.max)/2;
             cfg.param_scale(p) = (param_def.max - param_def.min)/2;
+        elseif (strcmp(param_def.prior,'loguniform'))
+            cfg.param_sample{p} = @() exp(unifrnd( log(param_def.min), log(param_def.max)));
+            cfg.param_logpdf{p} = @(x) uniflogpdf( x, param_def.min, param_def.max );
+            cfg.param_pdf{p} = @(x) unifpdf( x, param_def.min, param_def.max );
+            cfg.param_location(p) = (param_def.min + param_def.max)/2;
+            cfg.param_scale(p) = (log10(param_def.max) - log10(param_def.min))/2;
         elseif (strcmp(param_def.prior,'normal'))
             cfg.param_sample{p} = @() normrnd( param_def.mu, param_def.sigma );
             cfg.param_logpdf{p} = @(x) normlogpdf( x, param_def.mu, param_def.sigma );
