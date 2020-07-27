@@ -21,7 +21,7 @@ pout(logparams)= log10(pout(logparams));
 pout= pout + epsilon.*randn(1,cfg.nparams);
 
 % Back transform logscale parameters
-pout(logparams)= 10^(pout(logparams));
+pout(logparams)= 10.^(pout(logparams));
 
 end
 
