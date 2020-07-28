@@ -5,7 +5,7 @@ function [pout] = proposal_fcn_log(params, epsilon, cfg)
 % into log space, then translates all parameters, then transforms log params
 % back to original space.
 
-if (~exist('cfg.logparams'))
+if (~isfield(cfg,'logparams'))
     lp=boolean([]);
     for i=1:length(cfg.param_defs)
         lp(end+1)= strcmp(cfg.param_defs{i}.prior,'loguniform');
