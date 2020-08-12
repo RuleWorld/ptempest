@@ -1,23 +1,30 @@
-clc; clear;
+function [key_struct] = run_ptempest( N_Swaps, Job_Name)
+
 %The purpose  of this matlab script is to point to ptempest, point to the
 %model, and also point to the output location. The output location will
 %contain all of the custom scripts needed in order  to succesffuly run
 %ptemptest. 
 
+%Number of swaps
+if ~exist('N_Swaps', 'var')
+    N_Swaps=200;
+end
+
+%Output Location 
+Output_Loc = "Fits";
+if ~exist('Job_Name', 'var')
+    Job_Name= '';
+end
+                   
 %pTempest location should be absolute paths and NOT relative
-pTempest_Loc = "~/Documents/Git_Repositories/ptempest/"; 
+pTempest_Loc = "~/Documents/GitHub/ptempest"; 
 
 %BNGL File Location 
-BNGL_Function_Location = "/Applications/RuleBender.app/Contents/eclipse/BioNetGen-2.5.0/";
+BNGL_Function_Location = "/Applications/RuleBender.app/Contents/eclipse/BioNetGen/";
 
 %General Model Information
 BNGL_Model_Loc  = "../";
 BNGL_Model_Name = "Model"; 
-
-
-%Output Location 
-Output_Loc = "TestResults";
-Job_Name  = "Plotting";
 
 %CSV Files Needed to run pTemptest
 Parameter_CSV_Loc = "Parameters.csv";
@@ -28,34 +35,12 @@ Heuristic_CSV_Loc = "Heuristics.xlsx";
 %Expierments: [There has to be a better way.] 
 Expierments = struct();
 
-Expierments.EGF_1_ng_ml.EGF0 = 1;
-Expierments.EGF_10U0P5_ng_ml.EGF0 = 10^0.5;
-Expierments.EGF_10UM0P5_ng_ml.EGF0 = 10^(-0.5);
-Expierments.EGF_10UM1_ng_ml.EGF0 = 10^(-1.0);
-Expierments.EGF_10UM1P5_ng_ml.EGF0 = 10^(-1.5);
-Expierments.EGF_10UM10_ng_ml.EGF0 = 10^(-10);
 
-
-%Expierment Names for Plotting [Optional] 
-ExpiermentNames.EGF_1_ng_ml   = "EGF Concentration = 1 ng/ml";
-ExpiermentNames.EGF_10U0P5_ng_ml  = "EGF Concentration = 3.1623 ng/ml";
-ExpiermentNames.EGF_10UM0P5_ng_ml = "EGF Concentration = 0.3162 ng/ml";
-ExpiermentNames.EGF_10UM1_ng_ml   = "EGF Concentration = 0.1 ng/ml";
-ExpiermentNames.EGF_10UM1P5_ng_ml = "EGF Concentration = 0.0316 ng/ml";
-ExpiermentNames.EGF_10UM10_ng_ml  = "EGF Concentration = 0 ng/ml";
-
-%Analyte Names for Plotting [Optional] 
-AnalyteNamesOutputs.pAkt___relative_to_max = "pAKT Relative to Max"; 
-AnalyteNamesOutputs.sEGFR___mle = "sEGFR MLE Fit";
-
-%Time Legend and Conversion 
-TimeInformation.unit = "Minutes";
-TimeInformation.conversion = 1/60;
+Expierments.expierment_1.S0 = 100;
+Expierments.expierment_1.E0 = 10;
 
 %Other Options: 
 Sim_DT = 1;
-Number_Of_Swaps = 5000;
-
 
 %--------------------------------------------------------------------------
 %Everything above should be just variable declarations and everythign below
@@ -64,7 +49,7 @@ Number_Of_Swaps = 5000;
 key_struct = init_config_defaults();
 
 key_struct.sim_dt = Sim_DT;
-key_struct.nswaps = Number_Of_Swaps; 
+key_struct.nswaps = N_Swaps; 
 
 %Key ptempest folders: 
 key_struct.ptempest_loc = pTempest_Loc;
@@ -165,18 +150,14 @@ key_struct = setup_default_functions( key_struct );
 
 key_struct.energy_fcn = @(params) energy_gaussian_custom_v2(params, key_struct);
 
-%Clearing parameters that are not needed because they are redefined in the
-%key_struct object. 
-clear pTempest_Loc BNGL_Function_Location BNGL_Model_Loc BNGL_Model_Name
-clear Output_Loc Job_Name Parameter_CSV_Loc Observables_CSV_Loc 
-clear Data_CSV_Loc Expierments
-clear Heuristic_CSV_Loc Number_Of_Swaps Sim_DT
-
 %Running the Fit
+startdir=pwd;
 cd(key_struct.output_location)
 save("key_struct.mat","key_struct");
 parallel_tempering(key_struct);
+cd(startdir);
 
+end
 
 %--------------------------------------------------------------------------
 %Functions
@@ -201,12 +182,12 @@ function [cfg] = init_config_defaults()
     cfg.jobname = 'pt';                    % job name, for file input/output
     cfg.shuffle  = 1;                      % shuffle random number streams (seed by clock)
     cfg.parallel = 0;                      % parallel? true/false
-    cfg.maxlabs  = 4;                      % maximum number of labs for parallel computing
+    cfg.maxlabs  = 1;                      % maximum number of labs for parallel computing
     cfg.nchains  = 4;                      % number of chains
     cfg.nswaps = 2000;                      % number of chain swaps
     cfg.nsteps = 25;                       % number of steps between chain swaps
     cfg.display_status_interval = 10;       % How often to display info
-    cfg.save_progress_interval = 1000;     % How often to save progress 
+    cfg.save_progress_interval = 100;     % How often to save progress 
     cfg.adapt_relstep_interval = 100;      % How often to adapt relative step size
     cfg.adapt_relstep_rate = 0.20;         % relative step size adaption rate
     cfg.optimal_step_acceptance = 0.24;    % optimal rate of step acceptance
@@ -273,13 +254,16 @@ function [output_loc] = create_output_folders(MainOutLoc,JobName)
     %order to reuse names of folders but not override existing folders
     %(jobs) that have the same name, a timestamp is added in the following
     %way: 
-    % <Year>_<Month>_<Day>___<Hour>_<Minute>_<Second>___<JobName>
+    % <Year>-<Month>-<Day>_<Hour>-<Minute>-<Second>_<JobName>
     time = datetime(); 
     
-    date     = num2str(time.Year) + "_"+num2str(time.Month) +"_"+num2str(time.Day);
-    run_time = num2str(time.Hour) + "_"+num2str(time.Minute) +"_"+num2str(round(time.Second));
+    date     = sprintf('%04d-%02d-%02d', time.Year, time.Month, time.Day);
+    run_time = sprintf('%02d-%02d-%2d', time.Hour, time.Minute, round(time.Second));
     
-    full_name = date +"___"+ run_time + "___" + JobName; 
+    full_name = date +"_"+ run_time;
+    if (JobName~="")
+        full_name= full_name + '_' + JobName;
+    end
     
     output_loc = MainOutLoc + "/" + full_name;
     if ~exist(output_loc,'dir')
@@ -336,8 +320,8 @@ function [StructObj] = compile_model(StructObj)
         error("BNGL model failed to run and make .m file, check model file"); 
     end 
     
-    %Make Output Directory and Move Files to that location 
-    out_location = StructObj.output_location + "/" + "BNGL_Output";
+    %Make Output Directo and Move Files to that location 
+    out_location = StructObj.output_location + "BNGL_Output";
     mkdir(out_location);
     
     %Assume the code needs compiled unless _cvode.c is not found 
@@ -902,10 +886,6 @@ function [out] = getConstants(InputCell)
             out = out + str2num(InputCell{ith_constant});
         end 
     end 
-end 
-
-function [out] = value(in)
-    out = in; 
 end 
 
 function [numerator,denominator] = assess_observable(Observable)
