@@ -1,4 +1,4 @@
-classdef PlottingTools_V2 < handle
+classdef plotting_tool < handle
    properties
       loc_key_struct 
       num_samples    
@@ -172,7 +172,7 @@ classdef PlottingTools_V2 < handle
    end 
    methods(Hidden)
        %Intialization of the Plotting tool. 
-       function obj = PlottingTools_V2(LocOfKeyStruct,NumberOfSamplesWithOutReplacement,ConvergedStart)
+       function obj = plotting_tool(LocOfKeyStruct,NumberOfSamplesWithOutReplacement,ConvergedStart)
            if nargin <1
                error("Must define the location of the ptemptest results")
            elseif nargin <2
