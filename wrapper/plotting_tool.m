@@ -30,7 +30,7 @@ classdef plotting_tool < handle
            end
            
            if ~exist('EndSampling','var')
-               EndSampling = obj.last_swap; 
+               EndSampling = obj.end_sampling; 
            else 
                obj.end_sampling = EndSampling; 
            end 
