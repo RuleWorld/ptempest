@@ -82,8 +82,8 @@ classdef plotting_tool < handle
                 disp("Number of samples chosen does not equal to the number of samples set") 
                 disp("Resampling to match sampled patients with number") 
                 obj.sample_patients;
-           elseif obj.current_converged_start ~= obj.converged_start
-               disp("The minimum converged value changed, need to resample") 
+           elseif (obj.current_converged_start ~= obj.converged_start) || (obj.current_sampling_end ~= obj.end_sampling)
+               disp("The minimum converged value and/or sample end value changed, need to resample") 
                obj.sample_patients;
            else 
                disp("Reusing Previous Sampled Parameters!") 
@@ -317,8 +317,8 @@ classdef plotting_tool < handle
            elseif length(obj.samples_chosen) ~= obj.num_samples
                disp("Need to re-sample and simulate due to change in number of samples")
                obj.simulate_fit_exp
-           elseif obj.current_converged_start ~= obj.converged_start
-               disp("The minimum converged value changed, need to resimulate and resample") 
+           elseif (obj.current_converged_start ~= obj.converged_start) || (obj.current_sampling_end ~= obj.end_sampling)
+               disp("The minimum converged value changed and/or sample end value changed, need to resimulate and resample") 
                obj.simulate_fit_exp
            end 
        end 
