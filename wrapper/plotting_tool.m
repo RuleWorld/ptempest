@@ -17,6 +17,7 @@ classdef plotting_tool < handle
       energy_chain
       current_converged_start
       current_sampling_end
+      need_to_resimulate
       %Parameters useful to be visable while developing:
       
    end 
@@ -39,6 +40,8 @@ classdef plotting_tool < handle
                                  obj.num_samples,"Replace",false);
            obj.current_converged_start = ConvergedStart;
            obj.current_sampling_end    = EndSampling; 
+           %Giving a flag that re-simulation needs to occur since sampling occured
+           obj.need_to_resimulate      = 1; 
        end 
        function [] = plot_all_energy_chains(obj,Start,RollingAvg,Stop)
             if ~exist('Start','var')
@@ -99,6 +102,10 @@ classdef plotting_tool < handle
                
                obj = calculate_and_store_psm(obj,ith_sample); 
            end
+           
+           %Setting the flag to zero to indicate the current sampling set
+           %has been simulated. 
+           obj.need_to_resimulate = 0; 
                 
        end 
        
@@ -319,6 +326,9 @@ classdef plotting_tool < handle
                obj.simulate_fit_exp
            elseif (obj.current_converged_start ~= obj.converged_start) || (obj.current_sampling_end ~= obj.end_sampling)
                disp("The minimum converged value changed and/or sample end value changed, need to resimulate and resample") 
+               obj.simulate_fit_exp
+           elseif obj.need_to_resimulate 
+               disp("Resampling was manually peformed, need to resimulate the samples")
                obj.simulate_fit_exp
            end 
        end 
