@@ -3,6 +3,7 @@ classdef plotting_tool < handle
       loc_key_struct 
       num_samples    
       converged_start
+      end_sampling
       
       %Temporary Visable Parameters:
       key_struct
@@ -15,21 +16,29 @@ classdef plotting_tool < handle
       params_chain
       energy_chain
       current_converged_start
+      current_sampling_end
       %Parameters useful to be visable while developing:
       
    end 
    
    methods
-       function [obj] = sample_patients(obj,ConvergedStart)
+       function [obj] = sample_patients(obj,ConvergedStart,EndSampling)
            if ~exist('ConvergedStart','var')
                ConvergedStart = obj.converged_start; 
            else 
                obj.converged_start = ConvergedStart;
            end
            
-           obj.samples_chosen = datasample(ConvergedStart:obj.last_swap,...
+           if ~exist('EndSampling','var')
+               EndSampling = obj.last_swap; 
+           else 
+               obj.end_sampling = EndSampling; 
+           end 
+           
+           obj.samples_chosen = datasample(ConvergedStart:EndSampling,...
                                  obj.num_samples,"Replace",false);
            obj.current_converged_start = ConvergedStart;
+           obj.current_sampling_end    = EndSampling; 
        end 
        function [] = plot_all_energy_chains(obj,Start,RollingAvg,Stop)
             if ~exist('Start','var')
@@ -212,6 +221,7 @@ classdef plotting_tool < handle
             obj.params_chain = additional.params_chain;
             obj.energy_chain = additional.energy_chain; 
             obj.last_swap    = additional.last_swap; 
+            obj.end_sampling = additional.last_swap;
        end 
        
        %Function to prepare the empty data structure for fitting
