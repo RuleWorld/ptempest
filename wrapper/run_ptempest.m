@@ -1,4 +1,4 @@
-function [key_struct] = run_ptempest( N_Swaps, Job_Name)
+function [key_struct] = run_ptempest(Expierments, N_Swaps, Job_Name)
 
 %The purpose  of this matlab script is to point to ptempest, point to the
 %model, and also point to the output location. The output location will
@@ -31,13 +31,6 @@ Parameter_CSV_Loc = "Parameters.csv";
 Observables_CSV_Loc = "Observables.csv";
 Data_CSV_Loc = "Data.csv";
 Heuristic_CSV_Loc = "Heuristics.xlsx";
-
-%Expierments: [There has to be a better way.] 
-Expierments = struct();
-
-
-Expierments.expierment_1.S0 = 100;
-Expierments.expierment_1.E0 = 10;
 
 %Other Options: 
 Sim_DT = 1;
