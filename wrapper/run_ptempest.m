@@ -5,6 +5,11 @@ function [key_struct] = run_ptempest(Expierments, N_Swaps, Job_Name)
 %contain all of the custom scripts needed in order  to succesffuly run
 %ptemptest. 
 
+%Error if no expierments are defined: 
+if ~exist('Expierments','var')
+    error(sprintf("No expierments defined. Must create a struct object in the form of:\n<expierment_name>.<par_to_update> = <new value>"))
+end 
+
 %Number of swaps
 if ~exist('N_Swaps', 'var')
     N_Swaps=200;
