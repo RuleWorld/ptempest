@@ -32,10 +32,14 @@ BNGL_Model_Loc  = "../";
 BNGL_Model_Name = "Model"; 
 
 %CSV Files Needed to run pTemptest
+Use_CSV_Files = false;
 Parameter_CSV_Loc = "Parameters.csv";
 Observables_CSV_Loc = "Observables.csv";
 Data_CSV_Loc = "Data.csv";
 Heuristic_CSV_Loc = "Heuristics.xlsx";
+
+%Excel Document for Fit information: 
+Fit_Information_Loc = "FitInformation.xlsx";
 
 %Other Options: 
 Sim_DT = 1;
@@ -63,10 +67,15 @@ key_struct.bngl_model_name = BNGL_Model_Name;
 key_struct.bngl_function_location = BNGL_Function_Location; 
 
 %Orginal Key CSV file location
-key_struct.original_parameter_loc  = pwd + "/" + Parameter_CSV_Loc;
-key_struct.original_observable_loc = pwd + "/" + Observables_CSV_Loc;
-key_struct.original_data_loc       = pwd + "/" + Data_CSV_Loc; 
-key_struct.original_heuristic_loc  = pwd + "/" + Heuristic_CSV_Loc;
+key_struct.use_csv_files = Use_CSV_Files;
+if Use_CSV_Files
+    key_struct.original_parameter_loc  = pwd + "/" + Parameter_CSV_Loc;
+    key_struct.original_observable_loc = pwd + "/" + Observables_CSV_Loc;
+    key_struct.original_data_loc       = pwd + "/" + Data_CSV_Loc; 
+    key_struct.original_heuristic_loc  = pwd + "/" + Heuristic_CSV_Loc;
+else 
+    key_struct.orginal_fit_information_loc = pwd + "/" + Fit_Information_Loc; 
+end 
 
 %Check to ensure all of the key  folders exists: 
 check_ptempest_locations(key_struct); 
@@ -279,15 +288,22 @@ function [StructObj] = copy_files(StructObj)
     loc_of_bngl_model = StructObj.bngl_model_loc + "/" + ... 
                         StructObj.bngl_model_name + ".bngl"; 
                     
-    data_csv       = StructObj.original_data_loc;
-    observable_csv = StructObj.original_observable_loc;
-    parameter_csv  = StructObj.original_parameter_loc;
-    heuristics_csv = StructObj.original_heuristic_loc;
-    files_2_copy = [data_csv observable_csv parameter_csv ... 
-                    heuristics_csv loc_of_bngl_model];
-                
-    names = ["data_loc","observable_loc","parameter_loc",...
-             "heuristic_loc","model_loc"];
+    if StructObj.use_csv_files
+        data_csv       = StructObj.original_data_loc;
+        observable_csv = StructObj.original_observable_loc;
+        parameter_csv  = StructObj.original_parameter_loc;
+        heuristics_csv = StructObj.original_heuristic_loc;
+        files_2_copy = [data_csv observable_csv parameter_csv ... 
+                        heuristics_csv loc_of_bngl_model];
+
+        names = ["data_loc","observable_loc","parameter_loc",...
+                 "heuristic_loc","model_loc"];
+    else 
+        orginal_fit_information = StructObj.orginal_fit_information_loc;
+        files_2_copy = [orginal_fit_information loc_of_bngl_model];
+        names = ["fit_information_loc","model_loc"];
+    end 
+        
                 
     for i_files = 1:length(files_2_copy)
         copy_file_i = files_2_copy{i_files}; 
@@ -405,7 +421,11 @@ function [StructObj] = update_param_defs(StructObj)
     param_defs = StructObj.original_param_defs; 
     
     %Load parameter changes file and ensure there are no duplicate entries 
-    parameter_changes = readtable(StructObj.parameter_loc,"PreserveVariableNames",true);
+    if StructObj.use_csv_files
+        parameter_changes = readtable(StructObj.parameter_loc,"PreserveVariableNames",true);
+    else
+        parameter_changes =readtable(StructObj.fit_information_loc,"Sheet","Parameters","PreserveVariableNames",true);
+    end 
     
     [n_updated_pars,~] = size(parameter_changes);
     
@@ -489,7 +509,11 @@ end
 %Function: Prepare the data. 
 function [StructObj] = prepare_data(StructObj)
     %Loading Data
-    raw_data = readtable(StructObj.data_loc,"PreserveVariableNames",true);
+    if StructObj.use_csv_files
+        raw_data = readtable(StructObj.data_loc,"PreserveVariableNames",true);
+    else
+        raw_data = readtable(StructObj.fit_information_loc,"Sheet","Data","PreserveVariableNames",true);
+    end 
     
     %Data Extraction
     analyte_names     = unique(raw_data.analyte);
@@ -558,7 +582,11 @@ function [StructObj] = prepare_data(StructObj)
     StructObj.post_simulation_analytes = post_simulation_analytes;
     
     %Load Heuristics: 
-    StructObj.heuristic_table = readtable(StructObj.heuristic_loc,'PreserveVariableNames',true);
+    if StructObj.use_csv_files
+        StructObj.heuristic_table = readtable(StructObj.heuristic_loc,'PreserveVariableNames',true);
+    else
+        StructObj.heuristic_table = readtable(StructObj.fit_information_loc,"Sheet","Heuristics","PreserveVariableNames",true);
+    end 
 end
 
 function [obsverable_out,err] = simulate_fit_trajectories(Parameters,StructObj)
