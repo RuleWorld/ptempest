@@ -1,13 +1,13 @@
-function [key_struct] = run_ptempest(Expierments, N_Swaps, Job_Name)
+function [key_struct] = run_ptempest(Experiments, N_Swaps, Job_Name)
 
 %The purpose  of this matlab script is to point to ptempest, point to the
 %model, and also point to the output location. The output location will
 %contain all of the custom scripts needed in order  to succesffuly run
 %ptemptest. 
 
-%Error if no expierments are defined: 
-if ~exist('Expierments','var')
-    error(sprintf("No expierments defined. Must create a struct object in the form of:\n<expierment_name>.<par_to_update> = <new value>"))
+%Error if no experiments are defined: 
+if ~exist('Experiments','var')
+    error(sprintf("No experiments defined. Must create a struct object in the form of:\n<experiment_name>.<par_to_update> = <new value>"))
 end 
 
 %Number of swaps
@@ -109,14 +109,14 @@ key_struct = init_parameter_defs(key_struct.param_defs,key_struct);
 key_struct = create_obs_defs(key_struct);
 key_struct = init_observable_defs( key_struct.obsv_defs, key_struct );
 
-%Loading Expierments in Key Structures: 
-key_struct.expierments = Expierments; 
+%Loading experiments in Key Structures: 
+key_struct.experiment = Experiments; 
 
 %Loading Specific Names for Axis 
-if exist("ExpiermentNames")
-    key_struct.expierment_plotting_names = ExpiermentNames;
+if exist("ExperimentNames")
+    key_struct.experiment_plotting_names = ExperimentNames;
 else 
-    key_struct.expierment_plotting_names = struct(); 
+    key_struct.experiment_plotting_names = struct(); 
 end 
 
 %Loading Specific Names for Axis 
@@ -133,10 +133,10 @@ else
     key_struct.time_information_plotting = struct(); 
 end 
 
-%Setting list of expierments to run. This is different from the set of
-%expierments needed to fit because prediction simulations could be checked
+%Setting list of experiments to run. This is different from the set of
+%experiments needed to fit because prediction simulations could be checked
 %for convergence. 
-key_struct.simulations_to_run = fieldnames(Expierments);
+key_struct.simulations_to_run = fieldnames(Experiments);
 
 %Preparing the Data: 
 key_struct = prepare_data(key_struct);
@@ -146,7 +146,7 @@ key_struct.simulate_fit_trajectories = @(params) simulate_fit_trajectories(param
 
 key_struct.get_post_simulation_modifications = @(simulation_data) get_post_simulation_modifications(simulation_data,key_struct);
 
-key_struct.get_simulated_data = @(Obsverable,Time,Expierments,SimulationData) get_simulated_data(Obsverable,Time,Expierments,SimulationData,key_struct);
+key_struct.get_simulated_data = @(Obsverable,Time,Experiments,SimulationData) get_simulated_data(Obsverable,Time,Experiments,SimulationData,key_struct);
 
 key_struct.get_simulated_data_for_fitting = @(Obsverable,SimulationData) get_simulated_data_for_fitting(Obsverable,SimulationData,key_struct);
 
@@ -522,7 +522,7 @@ function [StructObj] = prepare_data(StructObj)
     %Data by the numbers 
     n_fitted_analytes = length(analyte_names);
     
-    %Determining the Simulation Time for the expierments: 
+    %Determining the Simulation Time for the experiments: 
     StructObj.simulation_time = 0:StructObj.sim_dt:max(times_unique);
     
     %Extract Data Conversions if Necessary:
@@ -549,12 +549,12 @@ function [StructObj] = prepare_data(StructObj)
         reduced_data_analyte_i          = raw_data(strcmp(analyte_i,raw_data.analyte),:);
         
         %Creating a matrix where the x-axis represets time and each column
-        %is a different expierment. 
-        %Important Note: Assumes each time/expierment only contains a
+        %is a different experiment. 
+        %Important Note: Assumes each time/experiment only contains a
         %                single entry. 
-        value      = unstack(reduced_data_analyte_i,'value','expierment',"GroupingVariables",'time');
-        sigma      = unstack(reduced_data_analyte_i,'sigma','expierment',"GroupingVariables",'time');
-        weight     = unstack(reduced_data_analyte_i,'weight','expierment',"GroupingVariables",'time');
+        value      = unstack(reduced_data_analyte_i,'value','experiment',"GroupingVariables",'time');
+        sigma      = unstack(reduced_data_analyte_i,'sigma','experiment',"GroupingVariables",'time');
+        weight     = unstack(reduced_data_analyte_i,'weight','experiment',"GroupingVariables",'time');
         
         
         %The first column is the time column and it will be recorded in a
@@ -564,12 +564,12 @@ function [StructObj] = prepare_data(StructObj)
         data.(analyte_i).value      = table2array(value(:,2:end)); 
         data.(analyte_i).sigma      = table2array(sigma(:,2:end)); 
         data.(analyte_i).weight     = table2array(weight(:,2:end)); 
-        data.(analyte_i).expierment = value.Properties.VariableNames(2:end);
+        data.(analyte_i).experiment = value.Properties.VariableNames(2:end);
         data.(analyte_i).time       = value.time;
         
         %Storing the Indices of the relavant timepoints 
         data.(analyte_i).time_index       = get_index(StructObj.simulation_time,value.time);
-        data.(analyte_i).expierment_index = get_index(StructObj.simulations_to_run,data.(analyte_i).expierment);
+        data.(analyte_i).experiment_index = get_index(StructObj.simulations_to_run,data.(analyte_i).experiment);
     end 
     
     %Parameters to Save
@@ -592,16 +592,16 @@ end
 function [obsverable_out,err] = simulate_fit_trajectories(Parameters,StructObj)
     obsverable_out = zeros(length(StructObj.simulation_time),StructObj.n_obs,length(StructObj.simulations_to_run));
     
-    for ith_expierment = 1:length(StructObj.simulations_to_run)
-        expierment_i = StructObj.simulations_to_run{ith_expierment};
-        [err,~,obsv] = simulate_model(StructObj.simulation_time',[],Parameters,StructObj.param_index,StructObj.expierments.(expierment_i),StructObj.bngl_model_name);
+    for ith_experiment = 1:length(StructObj.simulations_to_run)
+        experiment_i = StructObj.simulations_to_run{ith_experiment};
+        [err,~,obsv] = simulate_model(StructObj.simulation_time',[],Parameters,StructObj.param_index,StructObj.experiment.(experiment_i),StructObj.bngl_model_name);
         
         if (err)
             obsverable_out = [];
             return;
         end
         
-        obsverable_out(:,:,ith_expierment) = obsv;
+        obsverable_out(:,:,ith_experiment) = obsv;
     end 
     
 end 
@@ -652,11 +652,11 @@ function [PSMD] = get_post_simulation_modifications(SimulationData,StructObj)
         obsv = post_simulation_analytes.(psa_i).obsv;
         
         times_to_extract = StructObj.data.(psa_i).time_index;
-        expierments_to_extract= StructObj.data.(psa_i).expierment_index; 
+        experiments_to_extract= StructObj.data.(psa_i).expierment_index; 
         obsv_index = StructObj.obsv_index.(obsv);
         exp_values = StructObj.data.(psa_i).value; 
         
-        obsv_for_conversion = squeeze(SimulationData(times_to_extract,obsv_index,expierments_to_extract));
+        obsv_for_conversion = squeeze(SimulationData(times_to_extract,obsv_index,experiments_to_extract));
         
         conversion_function = str2func(type);
         
@@ -676,24 +676,24 @@ function [PSMD] = get_post_simulation_modifications(SimulationData,StructObj)
 end 
 %Function: Get the data for fitting the model with the results. The
 %function below will have the same output as get_simulated_data except it
-%will not need to find the index locations of the times and expierments
+%will not need to find the index locations of the times and experiments
 %because it will already be known. This is in hopes to speed up the
 %parallel tempering process and avoid unnecessary calculations. 
 function [SimulationOut] = get_simulated_data_for_fitting(Obsverable,SimulationData,StructObj)
     %Finding the index that are associated in the data. The simulated
-    %data will be extracted in the same order as the inputs of Time and expierments. 
+    %data will be extracted in the same order as the inputs of Time and experiments. 
     if length(size(SimulationData)) == 2
         index_of_obsv = 'N/A';
     else 
         index_of_obsv = StructObj.obsv_index.(Obsverable);
     end 
-    index_of_expierments = StructObj.data.(Obsverable).expierment_index;
+    index_of_experiments = StructObj.data.(Obsverable).experiment_index;
     index_of_time = StructObj.data.(Obsverable).time_index;
     
     if isstr(index_of_obsv)
-        reduced_sim_data = SimulationData(index_of_time,index_of_expierments);
+        reduced_sim_data = SimulationData(index_of_time,index_of_experiments);
     else
-        reduced_sim_data = SimulationData(index_of_time,index_of_obsv,index_of_expierments);
+        reduced_sim_data = SimulationData(index_of_time,index_of_obsv,index_of_experiments);
     end 
 
     SimulationOut = squeeze(reduced_sim_data);
@@ -701,24 +701,24 @@ end
 
 
 %Function: Accepts an observable label, a list of times, a list of
-%expierments, and simulation data and returns a matrix where each row
-%represents a time and column represents an expierment. The order is in the
+%experiments, and simulation data and returns a matrix where each row
+%represents a time and column represents an experiment. The order is in the
 %same order as the inputs 
-function [SimulationOut] = get_simulated_data(Obsverable,Time,Expierments,SimulationData,StructObj)
+function [SimulationOut] = get_simulated_data(Obsverable,Time,Experiments,SimulationData,StructObj)
     %Finding the index that are associated in the data. The simulated
-    %data will be extracted in the same order as the inputs of Time and expierments. 
+    %data will be extracted in the same order as the inputs of Time and experiments. 
     if length(size(SimulationData)) == 2
         index_of_obsv = 'N/A';
     else 
         index_of_obsv = get_index(StructObj.observable_labels,Obsverable);
     end 
-    index_of_expierments = get_index(StructObj.simulations_to_run,Expierments);
+    index_of_experiments = get_index(StructObj.simulations_to_run,Experiments);
     index_of_time = get_index(StructObj.simulation_time,Time);
     
     if isstr(index_of_obsv)
-        reduced_sim_data = SimulationData(index_of_time,index_of_expierments);
+        reduced_sim_data = SimulationData(index_of_time,index_of_experiments);
     else
-        reduced_sim_data = SimulationData(index_of_time,index_of_obsv,index_of_expierments);
+        reduced_sim_data = SimulationData(index_of_time,index_of_obsv,index_of_experiments);
     end 
 
     SimulationOut = squeeze(reduced_sim_data);
@@ -791,7 +791,7 @@ function [energy] = energy_gaussian_custom_v2( params, cfg )
     simtimer = tic;
     
     %======================================================================
-    % Simulate the Expierments
+    % Simulate the Experiments
     %======================================================================
     
     [simulation_data,err] = cfg.simulate_fit_trajectories(params);
@@ -877,7 +877,7 @@ function [Energy] = calcEnergy(Value,Heuristic)
 end 
 
 function [ValueOut] = getValue(Simulation,heuristic_i,key_struct)
-    expierment = heuristic_i.Expierment;
+    experiment = heuristic_i.Experiment;
     if ~isnan(heuristic_i.Time)
         time = heuristic_i.Time;
     else 
@@ -890,8 +890,8 @@ function [ValueOut] = getValue(Simulation,heuristic_i,key_struct)
     
     
 
-    numerator_values = key_struct.get_simulated_data(numerator,time,expierment,Simulation);
-    denom_values = key_struct.get_simulated_data(denominator,time,expierment,Simulation);
+    numerator_values = key_struct.get_simulated_data(numerator,time,experiment,Simulation);
+    denom_values = key_struct.get_simulated_data(denominator,time,experiment,Simulation);
     
     
     constants_numer = getConstants(setdiff(numerator,key_struct.observable_labels));

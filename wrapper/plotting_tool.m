@@ -6,10 +6,6 @@ classdef plotting_tool < handle
       end_sampling
       
       %Temporary Visable Parameters:
-      key_struct
-      last_swap
-      samples_chosen
-      fitted_simulated_data
    end
    
    properties(Hidden)
@@ -19,6 +15,10 @@ classdef plotting_tool < handle
       current_sampling_end
       need_to_resimulate
       %Parameters useful to be visable while developing:
+      key_struct
+      last_swap
+      samples_chosen
+      fitted_simulated_data
       
    end 
    
@@ -110,20 +110,20 @@ classdef plotting_tool < handle
        end 
        
        %Function: Plot Single Analyte with all samples:
-       function [] = plot_analyte(obj,Analyte,Expierment)
+       function [] = plot_analyte(obj,Analyte,Experiment)
            %Check for valid inputs 
            if ~exist('Analyte','var')
                error("Need to provide analyte name")
            end 
-           if ~exist('Expierment','var')
-               Expierment_List = obj.key_struct.simulations_to_run
-               error("Need to provide expierment name. Choose one of the above outputs from the Expierment_List shown above:") 
+           if ~exist('Experiment','var')
+               Experiment_List = obj.key_struct.simulations_to_run
+               error("Need to provide experiment name. Choose one of the above outputs from the Experiment_List shown above:") 
            end 
            
            obj = check_for_needed_resimulation(obj);
            
            
-           data_to_plot = obj.get_simulated_data(Analyte,Expierment);
+           data_to_plot = obj.get_simulated_data(Analyte,Experiment);
            
            %Plot the Data 
            figure 
@@ -132,27 +132,27 @@ classdef plotting_tool < handle
            xlabel("Time [Seconds]","FontSize",20)
            %set_xlabel(key_struct.time_information_plotting);
            set_ylabel(obj,Analyte,obj.key_struct.analyte_plotting_names);
-           set_title(obj,Expierment,obj.key_struct.expierment_plotting_names);
+           set_title(obj,Experiment,obj.key_struct.experiment_plotting_names);
                
        end 
        
-       function [exported_simulated_data] = get_simulated_data(obj,Analyte,Expierment)
+       function [exported_simulated_data] = get_simulated_data(obj,Analyte,Experiment)
            %Check for valid inputs 
            if ~exist('Analyte','var')
                error("Need to provide analyte name")
            end 
-           if ~exist('Expierment','var')
-               Expierment_List = obj.key_struct.simulations_to_run
-               error("Need to provide expierment name. Choose one of the above outputs from the Expierment_List shown above:") 
+           if ~exist('Experiment','var')
+               Experiment_List = obj.key_struct.simulations_to_run
+               error("Need to provide experiment name. Choose one of the above outputs from the Experiment_List shown above:") 
            end 
            
-           %Determine the index of the analyte and expierment.First
+           %Determine the index of the analyte and experiment.First
            %objective is to determine if the analyte is a post simulation
            %modification or a direct observable
            index_analyte = find_index_of_analyte(obj,Analyte);
            
-           %Find the index of the Expierment: 
-           index_exp = find_index_of_expierment(obj,Expierment); 
+           %Find the index of the Experiment: 
+           index_exp = find_index_of_experiment(obj,Experiment); 
            
            %Get the data: 
            if index_analyte > 0 
@@ -171,14 +171,14 @@ classdef plotting_tool < handle
 
                 exp_data =  obj.key_struct.data.(analyte_i); 
 
-                for ith_expierment = 1:length(exp_data.expierment_index) 
-                    expierment_index = exp_data.expierment_index(ith_expierment);
-                    expierment_name = obj.key_struct.simulations_to_run{expierment_index};
+                for ith_experiment = 1:length(exp_data.experiment_index) 
+                    experiment_index = exp_data.experiment_index(ith_experiment);
+                    experiment_name = obj.key_struct.simulations_to_run{experiment_index};
                     
-                    obj.plot_analyte(analyte_i,expierment_name);
+                    obj.plot_analyte(analyte_i,experiment_name);
                     hold on 
-                    errorbar(exp_data.time,exp_data.value(:,ith_expierment),... 
-                             exp_data.sigma(:,ith_expierment),'LineStyle',"none",...
+                    errorbar(exp_data.time,exp_data.value(:,ith_experiment),... 
+                             exp_data.sigma(:,ith_experiment),'LineStyle',"none",...
                              'Color','r','Marker','.','MarkerSize',20)%,...
                             %200,'r','filled')
                 end
@@ -301,13 +301,13 @@ classdef plotting_tool < handle
            
        end 
        
-       %Find the index of the expierment: 
-       function [index_exp] = find_index_of_expierment(obj,Expierment)
-           index_exp = strcmp(Expierment,obj.key_struct.simulations_to_run);
+       %Find the index of the experiment: 
+       function [index_exp] = find_index_of_experiment(obj,Experiment)
+           index_exp = strcmp(Experiment,obj.key_struct.simulations_to_run);
            
            if sum(index_exp)~=1 
                disp(obj.key_struct.simulations_to_run)
-               error("Expierment Index Not Found. Check name")
+               error("Experiment Index Not Found. Check name")
            end 
            
        end 
