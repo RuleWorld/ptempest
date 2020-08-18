@@ -28,7 +28,7 @@ pTempest_Loc = "~/Documents/GitHub/ptempest";
 BNGL_Function_Location = "/Applications/RuleBender.app/Contents/eclipse/BioNetGen/";
 
 %General Model Information
-BNGL_Model_Loc  = "../";
+BNGL_Model_Loc  = "./";
 BNGL_Model_Name = "Model"; 
 
 %CSV Files Needed to run pTemptest
