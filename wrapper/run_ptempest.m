@@ -28,7 +28,7 @@ pTempest_Loc = "~/Documents/GitHub/ptempest";
 BNGL_Function_Location = "/Applications/RuleBender.app/Contents/eclipse/BioNetGen/";
 
 %General Model Information
-BNGL_Model_Loc  = "./";
+BNGL_Model_Loc  = "../";
 BNGL_Model_Name = "Model"; 
 
 %CSV Files Needed to run pTemptest
@@ -652,7 +652,7 @@ function [PSMD] = get_post_simulation_modifications(SimulationData,StructObj)
         obsv = post_simulation_analytes.(psa_i).obsv;
         
         times_to_extract = StructObj.data.(psa_i).time_index;
-        experiments_to_extract= StructObj.data.(psa_i).expierment_index; 
+        experiments_to_extract= StructObj.data.(psa_i).experiment_index; 
         obsv_index = StructObj.obsv_index.(obsv);
         exp_values = StructObj.data.(psa_i).value; 
         
