@@ -1,4 +1,4 @@
-function [key_struct] = run_ptempest(Experiments, N_Swaps, Job_Name)
+function [key_struct] = run_ptempest(BNGL_Model_Name,Experiments, N_Swaps, Job_Name)
 
 %The purpose  of this matlab script is to point to ptempest, point to the
 %model, and also point to the output location. The output location will
@@ -34,8 +34,10 @@ pTempest_Loc = fullfile(fPath,"..");
 BNGL_Function_Location = fullfile(fPath,"..","..","BioNetGen-2.5.1");
 
 %General Model Information
-BNGL_Model_Loc  = "..";
-BNGL_Model_Name = "Model"; 
+BNGL_Model_Loc  = ".";
+if ~exist('BNGL_Model_Name','var')
+    BNGL_Model_Name = "Model"; 
+end 
 
 %CSV Files Needed to run pTemptest
 Use_CSV_Files = false;
