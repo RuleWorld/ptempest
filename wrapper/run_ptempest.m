@@ -20,12 +20,18 @@ Output_Loc = "Fits";
 if ~exist('Job_Name', 'var')
     Job_Name= '';
 end
-                   
+     
+%Finding the location where the run_ptempest function is stored. 
+loc_of_pTempestWrapper = mfilename('fullpath');
+[fPath, ~, ~] = fileparts(loc_of_pTempestWrapper); 
+
+%pTempest is located in the directory above the runptempest file and the
 %pTempest location should be absolute paths and NOT relative
-pTempest_Loc = "~/Documents/GitHub/ptempest"; 
+pTempest_Loc = fullfile(fPath,"..");
 
 %BNGL File Location 
-BNGL_Function_Location = "/Applications/RuleBender.app/Contents/eclipse/BioNetGen/";
+
+BNGL_Function_Location = fullfile(fPath,"..","..","BioNetGen-2.5.1");
 
 %General Model Information
 BNGL_Model_Loc  = "../";
@@ -324,7 +330,7 @@ end
 
 %Function: Run BNGL model and compile if necessary to get .m file 
 function [StructObj] = compile_model(StructObj) 
-    full_function = StructObj.bngl_function_location + "BNG2.pl";
+    full_function = fullfile(StructObj.bngl_function_location,"BNG2.pl");
     model_run = StructObj.output_location+StructObj.bngl_model_name+".bngl";
     
     %Run BNGL script to generate matlab files
