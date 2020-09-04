@@ -34,7 +34,7 @@ pTempest_Loc = fullfile(fPath,"..");
 BNGL_Function_Location = fullfile(fPath,"..","..","BioNetGen-2.5.1");
 
 %General Model Information
-BNGL_Model_Loc  = "../";
+BNGL_Model_Loc  = "..";
 BNGL_Model_Name = "Model"; 
 
 %CSV Files Needed to run pTemptest
@@ -61,12 +61,12 @@ key_struct.nswaps = N_Swaps;
 
 %Key ptempest folders: 
 key_struct.ptempest_loc = pTempest_Loc;
-key_struct.core_loc     = pTempest_Loc + "/core/";
-key_struct.dist_loc     = pTempest_Loc + "/core/distr/";
-key_struct.vis_loc      = pTempest_Loc + "/vis/";
+key_struct.core_loc     = fullfile(pTempest_Loc,"core");
+key_struct.dist_loc     = fullfile(pTempest_Loc,"core","distr");
+key_struct.vis_loc      = fullfile(pTempest_Loc,"vis");
 
 %Model Locations
-key_struct.bngl_model_loc = pwd + "/" + BNGL_Model_Loc; 
+key_struct.bngl_model_loc = fullfile(pwd,BNGL_Model_Loc); 
 key_struct.bngl_model_name = BNGL_Model_Name; 
 
 %BNGL Location
@@ -75,12 +75,12 @@ key_struct.bngl_function_location = BNGL_Function_Location;
 %Orginal Key CSV file location
 key_struct.use_csv_files = Use_CSV_Files;
 if Use_CSV_Files
-    key_struct.original_parameter_loc  = pwd + "/" + Parameter_CSV_Loc;
-    key_struct.original_observable_loc = pwd + "/" + Observables_CSV_Loc;
-    key_struct.original_data_loc       = pwd + "/" + Data_CSV_Loc; 
-    key_struct.original_heuristic_loc  = pwd + "/" + Heuristic_CSV_Loc;
+    key_struct.original_parameter_loc  = fullfile(pwd,Parameter_CSV_Loc);
+    key_struct.original_observable_loc = fullfile(pwd,Observables_CSV_Loc);
+    key_struct.original_data_loc       = fullfile(pwd,Data_CSV_Loc); 
+    key_struct.original_heuristic_loc  = fullfile(pwd,Heuristic_CSV_Loc);
 else 
-    key_struct.orginal_fit_information_loc = pwd + "/" + Fit_Information_Loc; 
+    key_struct.orginal_fit_information_loc = fullfile(pwd,Fit_Information_Loc); 
 end 
 
 %Check to ensure all of the key  folders exists: 
@@ -234,7 +234,7 @@ function [] = check_ptempest_locations(StructObj)
         error("Location of ptempest is  not found! Check pTempest_Loc variable!")
     else 
         alert =        ptempest_check(StructObj.core_loc,"core"); 
-        alert =alert + ptempest_check(StructObj.dist_loc,"/core/distr"); 
+        alert =alert + ptempest_check(StructObj.dist_loc,fullfile("core","distr")); 
         alert =alert + ptempest_check(StructObj.vis_loc,"vis"); 
         if alert > 0 
             error("ptempest folder found but key folders are missing (check above)." + ... 
@@ -278,21 +278,21 @@ function [output_loc] = create_output_folders(MainOutLoc,JobName)
         full_name= full_name + '_' + JobName;
     end
     
-    output_loc = MainOutLoc + "/" + full_name;
+    output_loc = fullfile(MainOutLoc,full_name);
     if ~exist(output_loc,'dir')
         mkdir(output_loc);
     else 
         error("Final output folder exists. Check create_output_folders function")
     end 
     
-    output_loc = pwd + "/" + output_loc + "/";
+    output_loc = fullfile(pwd, output_loc);
 end 
 
 
 %Function: Copy files needed to run the fit in its current condition 
 function [StructObj] = copy_files(StructObj) 
-    loc_of_bngl_model = StructObj.bngl_model_loc + "/" + ... 
-                        StructObj.bngl_model_name + ".bngl"; 
+    loc_of_bngl_model = fullfile(StructObj.bngl_model_loc, ... 
+                                 StructObj.bngl_model_name) + ".bngl"; 
                     
     if StructObj.use_csv_files
         data_csv       = StructObj.original_data_loc;
@@ -314,13 +314,10 @@ function [StructObj] = copy_files(StructObj)
     for i_files = 1:length(files_2_copy)
         copy_file_i = files_2_copy{i_files}; 
         
-        split_copy_file = split(copy_file_i,"/"); 
-        if class(split_copy_file) == "string"
-            final_file_name = split_copy_file; 
-        else 
-            final_file_name = split_copy_file{end};
-        end 
-        StructObj.(names(i_files)) = StructObj.output_location+final_file_name;
+        %From the file path, obtain the name of the file to be copied 
+        [~,name,ext] = fileparts(copy_file_i);
+        final_file_name = strcat(name,ext);
+        StructObj.(names(i_files)) = fullfile(StructObj.output_location,final_file_name);
         [status,~] = copyfile(copy_file_i,StructObj.(names(i_files)));
         if ~status
             error("The following file was not found: " + copy_file_i)
@@ -331,7 +328,7 @@ end
 %Function: Run BNGL model and compile if necessary to get .m file 
 function [StructObj] = compile_model(StructObj) 
     full_function = fullfile(StructObj.bngl_function_location,"BNG2.pl");
-    model_run = StructObj.output_location+StructObj.bngl_model_name+".bngl";
+    model_run = fullfile(StructObj.output_location,strcat(StructObj.bngl_model_name,".bngl"));
     
     %Run BNGL script to generate matlab files
     [~,status] = perl(full_function,model_run); 
@@ -341,7 +338,7 @@ function [StructObj] = compile_model(StructObj)
     end 
     
     %Make Output Directo and Move Files to that location 
-    out_location = StructObj.output_location + "BNGL_Output";
+    out_location = fullfile(StructObj.output_location,"BNGL_Output");
     mkdir(out_location);
     
     %Assume the code needs compiled unless _cvode.c is not found 
@@ -356,7 +353,7 @@ function [StructObj] = compile_model(StructObj)
         end 
     end 
     
-    StructObj.bngl_output = out_location+"/";
+    StructObj.bngl_output = out_location;
     
     %Compile Model if writeMexfile was used: 
     if StructObj.compile_code
@@ -367,11 +364,11 @@ end
 %Function: Compile the mex model 
 function [] = compile_mex_model(StructObj)
     
-    loc_of_includeFile = StructObj.bngl_function_location + "/include";
+    loc_of_includeFile = fullfile(StructObj.bngl_function_location, "include");
     
-    loc_of_lib_file = StructObj.bngl_function_location + "/lib" ;
+    loc_of_lib_file = fullfile(StructObj.bngl_function_location,"lib");
     
-    cvode_loc = StructObj.bngl_output + StructObj.bngl_model_name + "_cvode.c";
+    cvode_loc = fullfile(StructObj.bngl_output,strcat(StructObj.bngl_model_name,"_cvode.c"));
 
     CompileCode = ...
          sprintf('mex %s -I%s -L%s -lsundials_cvode -lsundials_nvecserial',cvode_loc,loc_of_includeFile,loc_of_lib_file);
@@ -382,7 +379,7 @@ end
 
 %Function: Get model information: 
 function [StructObj] = get_information_from_model(StructObj)
-    model = StructObj.bngl_output+StructObj.bngl_model_name;
+    model = fullfile(StructObj.bngl_output,StructObj.bngl_model_name);
     % Get parameter names from param_labels string definition
     [~, result]= system(sprintf('grep "param_labels = { " %s.m', model));
     eval(result);
