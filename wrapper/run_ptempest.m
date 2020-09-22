@@ -5,6 +5,19 @@ function [key_struct] = run_ptempest(BNGL_Model_Name,Experiments, N_Swaps, Job_N
 %contain all of the custom scripts needed in order  to succesffuly run
 %ptemptest. 
 
+%--------------------------------------------------------------------------
+%                Preventing and Notifying about Common Errors
+%--------------------------------------------------------------------------
+%The BNGL model name must be a string and not a character vector. If character 
+%vector is provided, it will be converted to a string. 
+if ~isstring(BNGL_Model_Name) 
+    if ischar(BNGL_Model_Name)
+        BNGL_Model_Name = string(BNGL_Model_Name); 
+    else 
+        error("Model name must be a string or char");
+    end 
+end 
+
 %Error if no experiments are defined: 
 if ~exist('Experiments','var')
     error(sprintf("No experiments defined. Must create a struct object in the form of:\n<experiment_name>.<par_to_update> = <new value>"))
