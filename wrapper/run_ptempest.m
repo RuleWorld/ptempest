@@ -53,7 +53,7 @@ Parameter_CSV_Loc = "Parameters.csv";
 Observables_CSV_Loc = "Observables.csv";
 Data_CSV_Loc = "Data.csv";
 Heuristic_CSV_Loc = "Heuristics.xlsx";
-Experiment_CSV_Loc = "Experiment.csv";
+Experiment_CSV_Loc = "Experiments.csv";
 
 %Excel Document for Fit information: 
 Fit_Information_Loc = "FitInformation.xlsx";
