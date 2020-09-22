@@ -1,4 +1,4 @@
-function [key_struct] = run_ptempest(BNGL_Model_Name,Experiments, N_Swaps, Job_Name)
+function [key_struct] = run_ptempest(BNGL_Model_Name, N_Swaps, Job_Name)
 
 %The purpose  of this matlab script is to point to ptempest, point to the
 %model, and also point to the output location. The output location will
@@ -16,11 +16,6 @@ if ~isstring(BNGL_Model_Name)
     else 
         error("Model name must be a string or char");
     end 
-end 
-
-%Error if no experiments are defined: 
-if ~exist('Experiments','var')
-    error(sprintf("No experiments defined. Must create a struct object in the form of:\n<experiment_name>.<par_to_update> = <new value>"))
 end 
 
 %Number of swaps
@@ -58,6 +53,7 @@ Parameter_CSV_Loc = "Parameters.csv";
 Observables_CSV_Loc = "Observables.csv";
 Data_CSV_Loc = "Data.csv";
 Heuristic_CSV_Loc = "Heuristics.xlsx";
+Experiment_CSV_Loc = "Experiment.csv";
 
 %Excel Document for Fit information: 
 Fit_Information_Loc = "FitInformation.xlsx";
@@ -94,6 +90,7 @@ if Use_CSV_Files
     key_struct.original_observable_loc = fullfile(pwd,Observables_CSV_Loc);
     key_struct.original_data_loc       = fullfile(pwd,Data_CSV_Loc); 
     key_struct.original_heuristic_loc  = fullfile(pwd,Heuristic_CSV_Loc);
+    key_struct.original_experiment_loc = fullfile(pwd,Experiment_CSV_Loc);
 else 
     key_struct.orginal_fit_information_loc = fullfile(pwd,Fit_Information_Loc); 
 end 
@@ -131,7 +128,7 @@ key_struct = create_obs_defs(key_struct);
 key_struct = init_observable_defs( key_struct.obsv_defs, key_struct );
 
 %Loading experiments in Key Structures: 
-key_struct.experiment = Experiments; 
+key_struct.experiment = GetExperimentsFromExcelSheet(key_struct); 
 
 %Loading Specific Names for Axis 
 if exist("ExperimentNames")
@@ -157,7 +154,7 @@ end
 %Setting list of experiments to run. This is different from the set of
 %experiments needed to fit because prediction simulations could be checked
 %for convergence. 
-key_struct.simulations_to_run = fieldnames(Experiments);
+key_struct.simulations_to_run = fieldnames(key_struct.experiment);
 
 %Preparing the Data: 
 key_struct = prepare_data(key_struct);
@@ -314,10 +311,11 @@ function [StructObj] = copy_files(StructObj)
         observable_csv = StructObj.original_observable_loc;
         parameter_csv  = StructObj.original_parameter_loc;
         heuristics_csv = StructObj.original_heuristic_loc;
+        experiment_csv = StructObj.original_experiment_loc; 
         files_2_copy = [data_csv observable_csv parameter_csv ... 
-                        heuristics_csv loc_of_bngl_model];
+                        experiment_csv heuristics_csv loc_of_bngl_model];
 
-        names = ["data_loc","observable_loc","parameter_loc",...
+        names = ["data_loc","observable_loc","parameter_loc","experiment_loc",...
                  "heuristic_loc","model_loc"];
     else 
         orginal_fit_information = StructObj.orginal_fit_information_loc;
@@ -973,6 +971,23 @@ end
 
 function [output] = split_sums(input_equation) 
     output = split(input_equation,"+");
+end 
+
+
+function [Experiments] = GetExperimentsFromExcelSheet(StructObj)
+    if StructObj.use_csv_files
+        experimental_table = readtable(StructObj.experiment_loc,"PreserveVariableNames",true);
+    else
+        experimental_table =readtable(StructObj.fit_information_loc,"Sheet","Experiments","PreserveVariableNames",true);
+    end 
+    Experiments = struct();
+
+    [n_rows, ~]   = size(experimental_table);
+
+    for i = 1:n_rows
+        ExtractedRow = experimental_table(i,:);
+        Experiments.(ExtractedRow.Name{1}).(ExtractedRow.Parameter{1}) = ExtractedRow.Value;
+    end 
 end 
 
 
