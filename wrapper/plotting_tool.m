@@ -188,24 +188,32 @@ classdef plotting_tool < handle
    end 
    methods(Hidden)
        %Intialization of the Plotting tool. 
-       function obj = plotting_tool(LocOfKeyStruct,NumberOfSamplesWithOutReplacement,ConvergedStart)
-           if nargin <1
+       function obj = plotting_tool(LocOfKeyStruct,ConvergedStart,NumberOfSamplesWithOutReplacement)
+           if nargin == 0
                error("Must define the location of the ptemptest results")
-           elseif nargin <2
+           elseif nargin == 1
                obj.loc_key_struct  = LocOfKeyStruct;
+               obj.converged_start = 1;
                obj.num_samples     = 100; 
-               obj.converged_start = 1; 
-           elseif nargin <3
+           elseif nargin == 2
                obj.loc_key_struct  = LocOfKeyStruct;
-               obj.num_samples     = NumberOfSamplesWithOutReplacement; 
-               obj.converged_start = 1;  
+               obj.converged_start = ConvergedStart;
+               obj.num_samples     = 100; 
            else 
                obj.loc_key_struct = LocOfKeyStruct;
-               obj.num_samples    = NumberOfSamplesWithOutReplacement; 
                obj.converged_start = ConvergedStart;
+               obj.num_samples    = NumberOfSamplesWithOutReplacement; 
            end 
            
            obj = load_key_information(obj);
+           
+           % Ensure the num_samples is <= number of sets selected from the
+           % parameter chain
+           max_samples= obj.end_sampling - obj.converged_start + 1;
+           if (obj.num_samples > max_samples)
+               warning("Setting number of samples to maximum allowed value: " + max_samples);
+               obj.num_samples= max_samples;
+           end
            
            %Set up fitted simulation data struct object
            obj.fitted_simulated_data.obv = [];
@@ -221,8 +229,8 @@ classdef plotting_tool < handle
        function obj = load_key_information(obj)
             temp_X = load(obj.loc_key_struct + "/key_struct.mat");
 
-            progress_file_name = dir(temp_X.key_struct.output_location+"/"+temp_X.key_struct.progress_regex);
-            additional = load(temp_X.key_struct.output_location+progress_file_name.name);
+            progress_file_name = dir(temp_X.key_struct.output_location + "/" + temp_X.key_struct.progress_regex);
+            additional = load(temp_X.key_struct.output_location + "/" + progress_file_name.name);
 
             obj.key_struct   = temp_X.key_struct; 
             obj.params_chain = additional.params_chain;
@@ -278,10 +286,15 @@ classdef plotting_tool < handle
             [num_chains,~] = size(Y);
             X = repmat(Start:Stop,num_chains,1)';
             
-            plot(X,Y',"LineWidth",5)
-            xlabel("Swap Iteration","FontSize",20)
-            ylabel("Energy","FontSize",20)
-            grid 
+            plot(X,Y',"LineWidth",5);
+            xlabel("Swap Iteration","FontSize",20);
+            ylabel("Energy","FontSize",20);
+            grid;
+            labels={};
+            for i=1:num_chains
+                labels{i}= sprintf("Chain %d",i);
+            end
+            legend(labels);
        end 
         
        

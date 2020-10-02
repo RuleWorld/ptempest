@@ -37,9 +37,16 @@ loc_of_pTempestWrapper = mfilename('fullpath');
 %pTempest location should be absolute paths and NOT relative
 pTempest_Loc = fullfile(fPath,"..");
 
-%BNGL File Location 
+% Locate BioNetGen directory
+BNGPATH= getenv('BIONETGEN_PATH');
+if (isempty(BNGPATH))
+    BNGPATH = fullfile(fPath,"..","..","BioNetGen-2.5.1");
+end
 
-BNGL_Function_Location = fullfile(fPath,"..","..","BioNetGen-2.5.1");
+% Determine if BioNetGen is located
+if (~exist(BNGPATH, 'dir'))
+    error("Invalid path to BioNetGen directory: " + BNGPATH);
+end
 
 %General Model Information
 BNGL_Model_Loc  = ".";
@@ -81,7 +88,7 @@ key_struct.bngl_model_loc = fullfile(pwd,BNGL_Model_Loc);
 key_struct.bngl_model_name = BNGL_Model_Name; 
 
 %BNGL Location
-key_struct.bngl_function_location = BNGL_Function_Location; 
+key_struct.bngl_function_location = BNGPATH; 
 
 %Orginal Key CSV file location
 key_struct.use_csv_files = Use_CSV_Files;
