@@ -18,11 +18,6 @@ if ~isstring(BNGL_Model_Name)
     end 
 end 
 
-%Number of swaps
-if ~exist('N_Swaps', 'var')
-    N_Swaps=200;
-end
-
 %Output Location 
 Output_Loc = "Fits";
 if ~exist('Job_Name', 'var')
@@ -65,17 +60,16 @@ Experiment_CSV_Loc = "Experiments.csv";
 %Excel Document for Fit information: 
 Fit_Information_Loc = "FitInformation.xlsx";
 
-%Other Options: 
-Sim_DT = 1;
-
 %--------------------------------------------------------------------------
 %Everything above should be just variable declarations and everythign below
 %should be actions needed in order to run ptemptest. 
 %--------------------------------------------------------------------------
 key_struct = GetDefaultValues(Fit_Information_Loc,Use_CSV_Files)
 
-key_struct.sim_dt = Sim_DT;
-key_struct.nswaps = N_Swaps; 
+%Number of swaps
+if exist('N_Swaps', 'var')
+    key_struct.nswaps = N_Swaps; 
+end
 
 %Key ptempest folders: 
 key_struct.ptempest_loc = pTempest_Loc;
