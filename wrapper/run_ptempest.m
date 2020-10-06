@@ -72,7 +72,7 @@ Sim_DT = 1;
 %Everything above should be just variable declarations and everythign below
 %should be actions needed in order to run ptemptest. 
 %--------------------------------------------------------------------------
-key_struct = init_config_defaults();
+key_struct = GetDefaultValues(Fit_Information_Loc,Use_CSV_Files)
 
 key_struct.sim_dt = Sim_DT;
 key_struct.nswaps = N_Swaps; 
@@ -243,6 +243,43 @@ function [cfg] = init_config_defaults()
     cfg.sim_tstop  = 20;                   % simulation stop time, s
     cfg.sim_dt     = 0.5;                  % time step for trajectory, s
 
+end 
+
+%Function: Get the default values for pTempest. If Excel sheet is being
+%used instead of CSV files then default valuess can be optionally inputted 
+%in a tab called pTemptestOptions, otherwise values set by 
+%init_config_defaults will be used.
+function [StructObj] = GetDefaultValues(LocOfExcelSheet,UseCSVFiles)
+    
+    
+    %Loading the complete set of default  parameters needed for pTempest
+    StructObj = init_config_defaults();
+        
+    %In order to modify the default parameters, Excel sheet must be used: 
+    if ~UseCSVFiles 
+        name_of_ptemptest_tab = "pTemptestOptions";
+        
+        if any(sheetnames(LocOfExcelSheet)==name_of_ptemptest_tab)
+            %Use Defined defaults in pTempest Tab: 
+            df = readcell(LocOfExcelSheet,"Sheet",name_of_ptemptest_tab,"NumHeaderLines",1);
+
+
+            [rows,columns] = size(df); 
+
+
+            for ith = 1:rows
+                value = df(ith,2); 
+                par_name = df(ith,1); 
+
+                %The values are stored as a 1x1 cell array when taken directly from df.
+                %Therefore, this grabs those values to convert it to not an array 
+                value = value{1};
+                par_name = par_name{1};
+
+                StructObj.(par_name) = value ;
+            end 
+        end 
+    end 
 end 
 
 %Function: Check for key locations in ptempest 
