@@ -3,7 +3,7 @@ function [key_struct] = run_ptempest(BNGL_Model_Name, N_Swaps, Job_Name)
 %The purpose  of this matlab script is to point to ptempest, point to the
 %model, and also point to the output location. The output location will
 %contain all of the custom scripts needed in order  to succesffuly run
-%ptemptest. 
+%ptempest. 
 
 %--------------------------------------------------------------------------
 %                Preventing and Notifying about Common Errors
@@ -49,7 +49,7 @@ if ~exist('BNGL_Model_Name','var')
     BNGL_Model_Name = "Model"; 
 end 
 
-%CSV Files Needed to run pTemptest
+%CSV Files Needed to run pTempest
 Use_CSV_Files = false;
 Parameter_CSV_Loc = "Parameters.csv";
 Observables_CSV_Loc = "Observables.csv";
@@ -62,7 +62,7 @@ Fit_Information_Loc = "FitInformation.xlsx";
 
 %--------------------------------------------------------------------------
 %Everything above should be just variable declarations and everythign below
-%should be actions needed in order to run ptemptest. 
+%should be actions needed in order to run ptempest. 
 %--------------------------------------------------------------------------
 key_struct = GetDefaultValues(Fit_Information_Loc,Use_CSV_Files)
 
@@ -241,7 +241,7 @@ end
 
 %Function: Get the default values for pTempest. If Excel sheet is being
 %used instead of CSV files then default valuess can be optionally inputted 
-%in a tab called pTemptestOptions, otherwise values set by 
+%in a tab called pTempestOptions, otherwise values set by 
 %init_config_defaults will be used.
 function [StructObj] = GetDefaultValues(LocOfExcelSheet,UseCSVFiles)
     
@@ -251,11 +251,11 @@ function [StructObj] = GetDefaultValues(LocOfExcelSheet,UseCSVFiles)
         
     %In order to modify the default parameters, Excel sheet must be used: 
     if ~UseCSVFiles 
-        name_of_ptemptest_tab = "pTemptestOptions";
+        name_of_ptempest_tab = "pTempestOptions";
         
-        if any(sheetnames(LocOfExcelSheet)==name_of_ptemptest_tab)
+        if any(sheetnames(LocOfExcelSheet)==name_of_ptempest_tab)
             %Use Defined defaults in pTempest Tab: 
-            df = readcell(LocOfExcelSheet,"Sheet",name_of_ptemptest_tab,"NumHeaderLines",1);
+            df = readcell(LocOfExcelSheet,"Sheet",name_of_ptempest_tab,"NumHeaderLines",1);
 
 
             [rows,columns] = size(df); 
