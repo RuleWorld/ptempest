@@ -338,7 +338,6 @@ function [output_loc] = create_output_folders(MainOutLoc,JobName)
     output_loc = fullfile(pwd, output_loc);
 end 
 
-
 %Function: Copy files needed to run the fit in its current condition 
 function [StructObj] = copy_files(StructObj) 
     loc_of_bngl_model = fullfile(StructObj.bngl_model_loc, ... 
@@ -543,7 +542,6 @@ function [StructObj] = create_param_defs(StructObj)
     StructObj.param_index = param_index;
 end
 
-
 %Function: Create the param_defs file by updating the pars as specified by
 %          an external excel sheet 
 function [StructObj] = update_param_defs(StructObj)
@@ -735,7 +733,6 @@ function [obsverable_out,err] = simulate_fit_trajectories(Parameters,StructObj)
     
 end 
 
-
 function [err, sp, obsv] = simulate_model( t, init, params,param_index,exp,model_name)
 
     pars_to_update = fieldnames(exp);
@@ -755,8 +752,6 @@ function [err, sp, obsv] = simulate_model( t, init, params,param_index,exp,model
     end
 
 end 
-
-
 
 function [PSMD] = get_post_simulation_modifications(SimulationData,StructObj)
     %Information Needed from the StructObj 
@@ -827,7 +822,6 @@ function [SimulationOut] = get_simulated_data_for_fitting(Obsverable,SimulationD
 
     SimulationOut = squeeze(reduced_sim_data);
 end 
-
 
 %Function: Accepts an observable label, a list of times, a list of
 %experiments, and simulation data and returns a matrix where each row
@@ -988,10 +982,6 @@ function [TotalHeuristicEnergy] = GetHeuristicTotals(StructObj,Simulation)
 
 end 
 
-
-
-
-
 function [Energy] = calcEnergy(Value,Heuristic)
     max_value = Heuristic.("Max Value");
     min_value = Heuristic.("Min Value"); 
@@ -1085,7 +1075,6 @@ end
 function [output] = split_sums(input_equation) 
     output = split(input_equation,"+");
 end 
-
 
 function [Experiments] = GetExperimentsFromExcelSheet(StructObj)
     if StructObj.use_csv_files
