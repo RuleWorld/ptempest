@@ -444,6 +444,81 @@ function [StructObj] = get_information_from_model(StructObj)
     [~, result]= system(sprintf('grep "observable_labels = { " %s.m', model));
     eval(result);
     StructObj.observable_labels = observable_labels;
+    
+    %Getting the species index from the .net file 
+    net_file = model+".net";
+    StructObj.species_labels = get_species_index(net_file);
+end 
+
+%Obtain the index of a target and list. Accepts only one target input as a
+%string or character to return the index it shows up in the ListOrder where
+%it is assumed that it does NOT contain any duplicated values. 
+function [IndexOut] = get_index_return_1(Target,ListOrder,ListType)
+    
+    %ListType is an optional argument that can be provided to help in
+    %debugging problems that could arise when defining variable names and
+    %matching them to bionetgen values. 
+    if ~exist('ListType', 'var')
+        ListType= '';
+    end
+    
+    IndexOut = find(strcmp(Target,ListOrder));
+    
+    if isempty(IndexOut)
+        error('No %s matches found, recheck name for errors: \n%s',ListType,Target)
+    end 
+end 
+
+%Obtain the species order list as outputted by bionetgen 
+function [SpeciesIndex] = get_species_index(LocOfNetFile)
+    %Opening the text file 
+    fid = fopen(LocOfNetFile);
+
+    %Getting the first line as a char array
+    line = fgetl(fid);
+
+    %Index counter
+    index_number = 0; 
+
+    %Final Output storing the species in the correct order as defined in
+    %BioNetGen 
+    SpeciesIndex = {};
+
+    %The order of species calculation is determined by the .net file. The .net
+    %file contains other information besides the species list. Therefore, as
+    %the program is reading the file line by line, recording will only take
+    %place when this is turned on. 
+    RecordSpecies = false;
+
+    while line~=-1
+        %Get next line
+        line = fgetl(fid);
+
+        %Remove leading and trailing spaces in the character array 
+        line = strtrim(line);
+
+        %All information has been found once end species has been found
+        if strcmp(line,'end species')
+            RecordSpecies = false;
+            line = -1;
+        end 
+
+        %Record species if the flag is set. The code only is run between the
+        %begin species and end species arguments 
+        if RecordSpecies
+            index_number = index_number + 1 ; 
+            processed_line = strsplit(line," ");
+            SpeciesIndex{index_number} =  processed_line{2};
+        end 
+
+        %Only record the species when it is within the desired block of species
+        if strcmp(line,'begin species')
+            RecordSpecies=true;
+        end 
+
+
+    end
+    fclose(fid);
 end 
 
 %Function: Create the param_defs cell array assuming all inputs are point 
