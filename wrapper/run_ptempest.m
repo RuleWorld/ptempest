@@ -40,7 +40,7 @@ end
 
 % Determine if BioNetGen is located
 if (~exist(BNGPATH, 'dir'))
-    error("Invalid path to BioNetGen directory: " + BNGPATH);
+    error("Invalid path to BioNetGen directory, consider updating/creating a enviroment variable called BIONETGEN_PATH that points to a version of Bionetgen. Download the latest release from the following link: https://github.com/RuleWorld/bionetgen/releases");
 end
 
 %General Model Information
@@ -112,7 +112,7 @@ key_struct = compile_model(key_struct);
 set_paths(key_struct);
 
 %Get observable names, parameter names, and parameter values from the .m
-%file 
+%file. Get the species names from the .net file . 
 key_struct = get_information_from_model(key_struct); 
 
 %Create the param_defs array using orginal values specified in BNGL
