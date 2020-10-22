@@ -1,0 +1,41 @@
+# Michaelis-Menten
+# Coded in BNGL by justin.s.hogg, 2013
+begin model
+begin parameters
+    S0      4.6052   # nM
+    E0      2.3026   # nM
+    log_k1  -4.6052  # log(/nM/s), logarithm is base 10
+    log_k2  0.0      # log(/s)
+    log_k3  0.0      # log(/s)
+end parameters
+begin molecule types
+    S()
+    E()
+    ES()
+    P()
+end molecule types
+begin seed species
+    S()  S0
+    E()  E0
+end seed species
+begin observables
+    Molecules  S     S()
+    Molecules  E     E()
+    Molecules  ES    ES()
+    Molecules  P     P()
+end observables
+begin reaction rules
+    E + S <-> ES  10^(log_k1), 10^(log_k2)
+    ES -> E + P   10^(log_k3)
+end reaction rules
+end model
+
+# generate reaction network
+generate_network({overwrite=>1})
+
+# generate ODE23s integrator for Matlab..
+#writeMfile({t_start=>0,t_end=>60,n_steps=>10,atol=>1e-6,rtol=>1e-6})
+
+# generate CVODE integrator w/ Mex interface.. Faster, but requires a compiler.
+writeMexfile({t_start=>0,t_end=>1000,n_steps=>100,atol=>1e-6,rtol=>1e-6})
+
