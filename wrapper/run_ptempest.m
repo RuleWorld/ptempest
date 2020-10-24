@@ -430,18 +430,31 @@ end
 %Function: Get model information: 
 function [StructObj] = get_information_from_model(StructObj)
     model = fullfile(StructObj.bngl_output,StructObj.bngl_model_name);
-    % Get parameter names from param_labels string definition
-    [~, result]= system(sprintf('grep "param_labels = { " %s.m', model));
-    eval(result);
+    
+    search_terms = {'param_labels =','parameters =','observable_labels ='};
+    object_names = {'param_labels','parameters','observable_labels'};
+    
+    %Opening the text file 
+    fid = fileread(model+".m");
+    
+    %Separating the file by lines 
+    fid = regexp(fid,'\n','split');    
+    
+    %Searching the document and find the information 
+    for ith_term = 1:length(search_terms)
+        index_found = find(contains(fid,search_terms{ith_term}));
+        
+        %Last found index is assumed to contain the values. This is
+        %important for the parameters search since it is set as an empty
+        %array first before the default values are set: 
+        eval(fid{index_found(end)});
+    end 
+    
+    %Setting the parameter labels, parameter values, and observable labels
+    %to be stored in the StructObj structure. The param_labels, parameters,
+    %and observable_labels are created in the eval command above. 
     StructObj.param_labels = param_labels;
-    
-    % Get default parameter values from model 
-    [~, result]= system(sprintf('grep "parameters = \\[ " %s.m', model));
-    eval(result);
     StructObj.parameters = parameters;
-    
-    [~, result]= system(sprintf('grep "observable_labels = { " %s.m', model));
-    eval(result);
     StructObj.observable_labels = observable_labels;
     
     %Getting the species index from the .net file 
